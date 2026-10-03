@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Styles') ?>
+  <style>
+    /* =========================================================================
+       PHASE 6 — JURY DASHBOARD
+       Aesthetic: purple ponderosa. Same parchment-on-dark base, but the
+       framing is purple instead of ember to signal "you're past the game."
+       ========================================================================= */
+
+    /* ---------- JURY IDENTITY BANNER ---------- */
+    .jury-banner {
+      position: relative;
+      padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.5rem);
+      margin-top: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(232, 221, 196, 0.15);
+      border-left: 6px solid var(--rh-purple);
+      background:
+        linear-gradient(180deg, rgba(93, 59, 133, 0.18), transparent),
+        rgba(15, 24, 20, 0.7);
+    }
+    .jury-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(93, 59, 133, 0.4) 0%, transparent 65%);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .jury-banner > * { position: relative; }
+    .jury-banner-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: #B89AD8;
+      margin-bottom: 0.6rem;
+    }
+    .jury-banner-name {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0 0 0.3rem;
+      line-height: 1;
+    }
+    .jury-banner-detail {
+      color: var(--ink-cream-soft);
+      font-size: 1.1rem;
+      font-style: italic;
+      margin: 0.6rem 0 0;
+      max-width: 64ch;
+      line-height: 1.55;
+    }
+    .jury-banner-stats {
+      display: flex;
+      gap: 1.8rem;
+      margin-top: 1.4rem;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .jury-banner-stat {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+    }
+    .jury-banner-stat strong {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1.7rem;
+      color: var(--parchment);
+      letter-spacing: 0;
+      margin-right: 0.4rem;
+    }
+
+    /* ---------- JURY MEMBERS LIST (small grid showing fellow jurors) ---------- */
+    .jury-members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+    .jury-member-tile {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(15, 24, 20, 0.4);
+    }
+    .jury-member-tile.me {
+      border-color: var(--rh-purple);
+      background: rgba(93, 59, 133, 0.12);
+    }
+    .jury-member-tile .swatch {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4) inset;
+      flex-shrink: 0;
+    }
+    .jury-member-tile .name {
+      font-family: var(--font-body);
+      color: var(--parchment);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .jury-member-tile .me-tag {
+      margin-left: auto;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      color: #B89AD8;
+      text-transform: uppercase;
+    }
+
+    /* ---------- PANELS (reusing tribe-panel style basics) ---------- */
+    .jury-panel {
+      margin-top: 1.4rem;
+      padding: clamp(1.2rem, 2.5vw, 2rem);
+      border: 1px solid rgba(232, 221, 196, 0.12);
+      background: rgba(15, 24, 20, 0.55);
+    }
+    .jury-panel.purple-accent {
+      border-color: rgba(93, 59, 133, 0.35);
+      border-left: 4px solid var(--rh-purple);
+      background:
+        linear-gradient(180deg, rgba(93, 59, 133, 0.08), transparent),
+        rgba(15, 24, 20, 0.6);
+    }
+    .jury-panel-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #B89AD8;
+      margin-bottom: 0.5rem;
+    }
+    .jury-panel-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0 0 0.4rem;
+    }
+    .jury-panel-subtitle {
+      font-family: var(--font-body);
+      font-style: italic;
+      color: var(--ink-cream-soft);
+      margin-bottom: 1rem;
+      font-size: 1.02rem;
+    }
+
+    /* ---------- ALL-TRIBES MIRROR (jury version) ---------- */
+    .mirror-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      border-bottom: 1px solid rgba(232, 221, 196, 0.1);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .mirror-tab {
+      padding: 0.6rem 1.05rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 2px;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--ink-cream-soft);
+      background: transparent;
+      transition: all 150ms var(--ease-snap);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+    }
+    .mirror-tab:hover { background: rgba(232, 221, 196, 0.06); color: var(--parchment); }
+    .mirror-tab.selected {
+      background: rgba(232, 221, 196, 0.08);
+      border-color: var(--tab-color, var(--ember));
+      color: var(--parchment);
+    }
+    .mirror-tab .swatch {
+      width: 14px; height: 14px;
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4) inset;
+      flex-shrink: 0;
+    }
+
+    .mirror-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 800px) {
+      .mirror-grid { grid-template-columns: 1fr; }
+    }
+
+    .mirror-block {
+      padding: 1rem 1.1rem;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(232, 221, 196, 0.08);
+    }
+    .mirror-block h4 {
+      margin: 0 0 0.7rem;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+    }
+    .mirror-stat-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 1rem;
+      color: var(--ink-cream);
+      margin-bottom: 0.4rem;
+    }
+    .mirror-stat-row strong { font-weight: 700; color: var(--parchment); }
+    .mirror-roster {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.4rem;
+    }
+    .mirror-roster-row {
+      font-size: 0.95rem;
+      color: var(--ink-cream);
+      padding: 0.3rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .mirror-roster-row.snuffed { color: var(--ink-faded); text-decoration: line-through; }
+    .mirror-roster-row.competed { color: var(--jade); font-weight: 600; }
+    .mirror-roster-row .pill-tiny {
+      font-family: var(--font-display);
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+    }
+    .mirror-tally-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.4rem 0 0;
+    }
+    .mirror-tally-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid rgba(232,221,196,0.06);
+      font-size: 1rem;
+    }
+    .mirror-tally-list li:last-child { border-bottom: 0; }
+    .mirror-tally-list .name { color: var(--ink-cream); }
+    .mirror-tally-list .votes {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--ember);
+      font-variant-numeric: tabular-nums;
+      font-size: 1.1rem;
+    }
+    .mirror-chat {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 0.7rem 0.9rem;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(232, 221, 196, 0.05);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .mirror-chat-msg { margin-bottom: 0.5rem; }
+    .mirror-chat-msg:last-child { margin-bottom: 0; }
+    .mirror-chat-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      font-size: 0.92rem;
+      margin-right: 0.5rem;
+    }
+    .mirror-chat-time {
+      font-size: 0.85rem;
+      color: var(--ink-faded);
+      font-variant-numeric: tabular-nums;
+    }
+    .mirror-chat-text { color: var(--ink-cream); margin-top: 0.1rem; }
+    .mirror-empty { color: var(--ink-faded); font-style: italic; padding: 0.5rem 0; font-size: 0.95rem; }
+    .mirror-locked-pill {
+      display: inline-block;
+      padding: 0.25rem 0.7rem;
+      margin: 0.18rem 0.32rem 0.18rem 0;
+      background: rgba(74, 140, 104, 0.15);
+      color: var(--jade);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 600;
+      border-radius: 999px;
+    }
+
+    /* ---------- JURY CHAT (Ponderosa) ---------- */
+    .ponderosa-container {
+      display: flex;
+      flex-direction: column;
+      height: 380px;
+      max-height: 60vh;
+      border: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(10, 15, 12, 0.5);
+      margin-top: 0.8rem;
+    }
+    .ponderosa-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--ink-faded) transparent;
+    }
+    .ponderosa-messages::-webkit-scrollbar { width: 6px; }
+    .ponderosa-messages::-webkit-scrollbar-thumb { background: var(--ink-faded); border-radius: 3px; }
+    .ponderosa-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      animation: fadeUp 350ms var(--ease-stage);
+    }
+    .ponderosa-msg-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+    }
+    .ponderosa-msg-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      font-size: 0.95rem;
+    }
+    .ponderosa-msg-tribe {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+    .ponderosa-msg-time {
+      font-size: 0.85rem;
+      color: var(--ink-faded);
+      font-variant-numeric: tabular-nums;
+    }
+    .ponderosa-msg-text {
+      color: var(--parchment);
+      line-height: 1.5;
+      word-wrap: break-word;
+      font-size: 1.05rem;
+    }
+    .ponderosa-msg.me .ponderosa-msg-name { color: #B89AD8 !important; }
+    .ponderosa-empty {
+      text-align: center;
+      color: var(--ink-faded);
+      font-style: italic;
+      padding: 2rem;
+    }
+    .ponderosa-input {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.7rem;
+      border-top: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(15, 24, 20, 0.6);
+    }
+    .ponderosa-input input {
+      flex: 1;
+      padding: 0.7rem 0.9rem;
+      background: rgba(232, 221, 196, 0.05);
+      border: 1px solid rgba(232, 221, 196, 0.15);
+      color: var(--parchment);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      border-radius: 2px;
+    }
+    .ponderosa-input input:focus {
+      outline: none;
+      border-color: var(--rh-purple);
+    }
+    .ponderosa-input button {
+      padding: 0.7rem 1.4rem;
+      background: var(--rh-purple);
+      border: none;
+      color: var(--parchment);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .ponderosa-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ---------- MVP VOTE PANEL ---------- */
+    .mvp-state-pending {
+      padding: 2rem;
+      text-align: center;
+      background: rgba(10, 15, 12, 0.4);
+      border: 1px dashed rgba(232, 221, 196, 0.15);
+    }
+    .mvp-state-pending .icon {
+      font-size: 2.4rem;
+      color: var(--rh-purple);
+      animation: flicker 3.4s ease-in-out infinite;
+      display: block;
+      margin-bottom: 0.6rem;
+    }
+    .mvp-state-pending .heading {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--parchment);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+    .mvp-state-pending .detail {
+      color: var(--ink-cream-soft);
+      font-style: italic;
+      max-width: 50ch;
+      margin: 0.4rem auto;
+      font-size: 1.05rem;
+    }
+
+    /* MVP candidates grouped by tribe */
+    .mvp-tribe-group {
+      margin-bottom: 1.4rem;
+    }
+    .mvp-tribe-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .mvp-tribe-header .swatch {
+      width: 16px; height: 16px;
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4) inset;
+    }
+    .mvp-candidates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    .mvp-candidate {
+      padding: 0.85rem 1rem;
+      border: 2px solid transparent;
+      background: rgba(232, 221, 196, 0.04);
+      cursor: pointer;
+      transition: all 150ms var(--ease-snap);
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--parchment);
+      font-family: var(--font-body);
+      font-size: 1.02rem;
+    }
+    .mvp-candidate:hover { background: rgba(232, 221, 196, 0.08); }
+    .mvp-candidate.selected {
+      border-color: var(--tribe-tint, var(--rh-purple));
+      background: rgba(93, 59, 133, 0.18);
+    }
+    .mvp-candidate .pick-mark {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(232, 221, 196, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: transparent;
+      flex-shrink: 0;
+    }
+    .mvp-candidate.selected .pick-mark {
+      background: var(--tribe-tint, var(--rh-purple));
+      border-color: var(--tribe-tint, var(--rh-purple));
+      color: var(--bg-deep);
+    }
+
+    .mvp-actions {
+      margin-top: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+    .mvp-status {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+    }
+    .mvp-status.success { color: var(--jade); }
+    .mvp-status.error { color: #E58D88; }
+
+    /* MVP REVEAL — winner announcement */
+    .mvp-reveal {
+      padding: 3rem 2rem;
+      text-align: center;
+      background:
+        radial-gradient(ellipse at center, rgba(226, 114, 63, 0.18), transparent 70%),
+        rgba(15, 24, 20, 0.7);
+      border: 2px solid var(--ember);
+      box-shadow: 0 0 40px rgba(226, 114, 63, 0.25);
+      animation: revealPop 700ms var(--ease-stage);
+    }
+    @keyframes revealPop {
+      0%   { opacity: 0; transform: scale(0.85); }
+      60%  { opacity: 1; transform: scale(1.04); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .mvp-reveal-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ember);
+      margin-bottom: 1rem;
+    }
+    .mvp-reveal-name {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0.4rem 0;
+      line-height: 1;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .mvp-reveal-tribe {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 1rem;
+      padding: 0.55rem 1.2rem;
+      border: 1px solid;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .mvp-reveal-tribe .swatch {
+      width: 16px; height: 16px;
+      border-radius: 3px;
+    }
+    .mvp-reveal-votes {
+      margin-top: 1rem;
+      font-family: var(--font-body);
+      color: var(--ink-cream-soft);
+      font-size: 1.1rem;
+      font-style: italic;
+    }
+    .mvp-reveal-results {
+      margin-top: 1.6rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid rgba(232, 221, 196, 0.15);
+    }
+    .mvp-reveal-results h4 {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+      margin-bottom: 0.6rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 0.85rem 1.4rem;
+      background: var(--ink);
+      color: var(--parchment);
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      box-shadow: var(--shadow-deep);
+      z-index: 1000;
+      transition: transform 300ms var(--ease-stage);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #2D5C3D; }
+    .toast.error { background: var(--blood); }
+  </style>
+</head>
+<body>
+  <?!= include('Header', {userEmail: userEmail, userRole: userRole, scriptUrl: scriptUrl, pageView: pageView}) ?>
+
+  <main class="shell">
+    <!-- Identity Banner -->
+    <section class="jury-banner">
+      <div class="jury-banner-eyebrow" id="juryEyebrow">The Ponderosa</div>
+      <h1 class="jury-banner-name" id="juryHeadline">The Jury</h1>
+      <p class="jury-banner-detail" id="juryDetail">
+        You've earned a seat at the table. From here, watch every tribe in silence —
+        their chats, their tallies, their politics. On Friday, you cast the deciding vote
+        for the Ultimate Roy-Hart Survivor.
+      </p>
+      <div class="jury-banner-stats">
+        <div class="jury-banner-stat"><strong id="statJuryCount">—</strong>Jury Members</div>
+        <div class="jury-banner-stat"><strong id="statTribesActive">6</strong>Tribes to Watch</div>
+        <div class="jury-banner-stat"><strong id="statDay">—</strong>Today</div>
+      </div>
+
+      <div id="juryMembersGrid" class="jury-members-grid"></div>
+    </section>
+
+    <!-- MVP Voting / Reveal -->
+    <section id="mvpSection" class="jury-panel purple-accent" style="display: none;">
+      <div class="jury-panel-eyebrow">The Final Vote</div>
+      <h2 class="jury-panel-title">Ultimate Roy-Hart Survivor</h2>
+      <div id="mvpBody"></div>
+    </section>
+
+    <!-- All-Tribes Mirror -->
+    <section class="jury-panel">
+      <div class="jury-panel-eyebrow">Look Inside Every Tribe</div>
+      <h2 class="jury-panel-title">The Tribes</h2>
+      <p class="jury-panel-subtitle">Switch between tribes to see their roster, points, vote tallies, and chat. Refreshes every 8 seconds.</p>
+      <div id="mirrorTabs" class="mirror-tabs"></div>
+      <div id="mirrorContent">
+        <div class="mirror-empty" style="text-align:center; padding:2rem;">Loading…</div>
+      </div>
+    </section>
+
+    <!-- Jury Chat -->
+    <section class="jury-panel purple-accent">
+      <div class="jury-panel-eyebrow">Jury Chat</div>
+      <h2 class="jury-panel-title">The Ponderosa</h2>
+      <p class="jury-panel-subtitle">Private to the jury. Compare notes, debate the MVP, share what you've seen.</p>
+      <div class="ponderosa-container">
+        <div id="ponderosaMessages" class="ponderosa-messages">
+          <div class="ponderosa-empty">No messages yet.</div>
+        </div>
+        <form id="ponderosaForm" class="ponderosa-input">
+          <input type="text" id="ponderosaInput" placeholder="Speak among your peers…" maxlength="500" autocomplete="off">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="ornament">✦ ✦ ✦</div>
+      Roy-Hart Middle School · Survivor Week · v0.6 (Phase 6 — Jury Dashboard)
+    </footer>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // No template scriptlets in this script — all data via google.script.run.
+
+    let JURY_STATE = null;
+    let MIRROR_VIEW = null;
+    let SELECTED_MIRROR_TRIBE = null;
+    let SELECTED_MVP_ID = null;
+    let POLL_TIMER = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('click', handleClick);
+      const ponderosaForm = document.getElementById('ponderosaForm');
+      if (ponderosaForm) ponderosaForm.addEventListener('submit', handlePonderosaSubmit);
+
+      pollState();
+      POLL_TIMER = setInterval(pollState, 6000);
+    });
+
+    function pollState() {
+      google.script.run
+        .withSuccessHandler(onJuryStateLoaded)
+        .withFailureHandler(showFatal)
+        .getJuryState();
+
+      google.script.run
+        .withSuccessHandler(onMirrorLoaded)
+        .withFailureHandler(function(err) { /* silent retry */ })
+        .getAllTribesJuryView();
+    }
+
+    // ====================================================================
+    // JURY STATE
+    // ====================================================================
+    function onJuryStateLoaded(state) {
+      const wasFirstLoad = !JURY_STATE;
+      JURY_STATE = state;
+      renderBanner(state);
+      renderJuryMembers(state);
+      renderMvp(state);
+      renderPonderosa(state, wasFirstLoad);
+    }
+
+    function renderBanner(state) {
+      const eyebrow = document.getElementById('juryEyebrow');
+      const headline = document.getElementById('juryHeadline');
+      const detail = document.getElementById('juryDetail');
+
+      if (state.me) {
+        eyebrow.textContent = 'Welcome, ' + state.me.original_tribe_name;
+        headline.textContent = state.me.name;
+      } else if (state.isAdmin) {
+        eyebrow.textContent = 'Admin View';
+        headline.textContent = 'The Jury';
+      }
+
+      // Update stats
+      document.getElementById('statJuryCount').textContent = state.juryCount || 0;
+      const dayLabels = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', post: 'Done', null: 'Pre' };
+      document.getElementById('statDay').textContent = dayLabels[state.currentDay] || '—';
+    }
+
+    function renderJuryMembers(state) {
+      const grid = document.getElementById('juryMembersGrid');
+      grid.innerHTML = '';
+      if (!state.juryMembers || state.juryMembers.length === 0) {
+        const empty = document.createElement('div');
+        empty.style.color = 'var(--ink-cream-soft)';
+        empty.style.fontStyle = 'italic';
+        empty.style.fontSize = '1rem';
+        empty.style.padding = '0.5rem 0';
+        empty.textContent = 'No jury members yet — eliminations begin Monday night.';
+        grid.appendChild(empty);
+        return;
+      }
+
+      state.juryMembers.forEach(function(j) {
+        const tile = document.createElement('div');
+        const isMe = state.me && j.email && j.email.toLowerCase() === state.me.email.toLowerCase();
+        tile.className = 'jury-member-tile' + (isMe ? ' me' : '');
+        const sw = document.createElement('span');
+        sw.className = 'swatch';
+        sw.style.background = j.original_tribe_color_hex;
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = j.name;
+        tile.appendChild(sw);
+        tile.appendChild(name);
+        if (isMe) {
+          const meTag = document.createElement('span');
+          meTag.className = 'me-tag';
+          meTag.textContent = 'You';
+          tile.appendChild(meTag);
+        }
+        grid.appendChild(tile);
+      });
+    }
+
+    // ====================================================================
+    // MVP VOTE / REVEAL
+    // ====================================================================
+    function renderMvp(state) {
+      const section = document.getElementById('mvpSection');
+      const body = document.getElementById('mvpBody');
+      body.innerHTML = '';
+
+      // Show section if voting open OR closed (with reveal)
+      if (!state.mvpVotingOpen && !state.mvpClosed) {
+        // Pre-Friday — keep section visible but show pending state
+        section.style.display = 'block';
+        const pending = document.createElement('div');
+        pending.className = 'mvp-state-pending';
+        pending.innerHTML =
+          '<div class="icon">✦</div>' +
+          '<div class="heading">Voting opens Friday</div>' +
+          '<div class="detail">After the obstacle course wraps, every juror casts ONE vote for the player who deserves the title of Ultimate Roy-Hart Survivor.</div>';
+        body.appendChild(pending);
+        return;
+      }
+
+      section.style.display = 'block';
+
+      // CLOSED — reveal!
+      if (state.mvpClosed) {
+        renderMvpReveal(state, body);
+        return;
+      }
+
+      // OPEN — show ballot
+      renderMvpBallot(state, body);
+    }
+
+    function renderMvpBallot(state, body) {
+      // Pre-fill selection from server
+      if (SELECTED_MVP_ID === null && state.mvpMyVote) {
+        SELECTED_MVP_ID = state.mvpMyVote;
+      }
+
+      const intro = document.createElement('p');
+      intro.style.color = 'var(--ink-cream-soft)';
+      intro.style.fontStyle = 'italic';
+      intro.style.fontSize = '1.05rem';
+      intro.style.marginBottom = '1rem';
+      intro.textContent = 'Voting is open. Pick ONE active player. You can change your vote until the window closes.';
+      body.appendChild(intro);
+
+      // Group candidates by tribe
+      const byTribe = {};
+      state.mvpCandidates.forEach(function(c) {
+        if (!byTribe[c.tribe_id]) byTribe[c.tribe_id] = { name: c.tribe_name, color: c.tribe_color_hex, list: [] };
+        byTribe[c.tribe_id].list.push(c);
+      });
+
+      Object.keys(byTribe).forEach(function(tid) {
+        const grp = byTribe[tid];
+        const wrap = document.createElement('div');
+        wrap.className = 'mvp-tribe-group';
+
+        const header = document.createElement('div');
+        header.className = 'mvp-tribe-header';
+        header.style.color = grp.color;
+        const sw = document.createElement('span');
+        sw.className = 'swatch';
+        sw.style.background = grp.color;
+        const txt = document.createElement('span');
+        txt.textContent = grp.name;
+        header.appendChild(sw);
+        header.appendChild(txt);
+        wrap.appendChild(header);
+
+        const cands = document.createElement('div');
+        cands.className = 'mvp-candidates';
+        grp.list.forEach(function(c) {
+          const tile = document.createElement('div');
+          tile.className = 'mvp-candidate' + (SELECTED_MVP_ID === c.id ? ' selected' : '');
+          tile.style.setProperty('--tribe-tint', c.tribe_color_hex);
+          tile.dataset.action = 'select-mvp';
+          tile.dataset.candidateId = c.id;
+          const mark = document.createElement('span');
+          mark.className = 'pick-mark';
+          mark.textContent = SELECTED_MVP_ID === c.id ? '✓' : '';
+          const name = document.createElement('span');
+          name.textContent = c.name;
+          tile.appendChild(mark);
+          tile.appendChild(name);
+          cands.appendChild(tile);
+        });
+        wrap.appendChild(cands);
+        body.appendChild(wrap);
+      });
+
+      const actions = document.createElement('div');
+      actions.className = 'mvp-actions';
+      const submitBtn = document.createElement('button');
+      submitBtn.type = 'button';
+      submitBtn.className = 'btn btn-primary';
+      submitBtn.dataset.action = 'submit-mvp';
+      submitBtn.textContent = 'Cast Vote';
+      const status = document.createElement('span');
+      status.id = 'mvpStatus';
+      status.className = 'mvp-status';
+      if (state.mvpMyVote) {
+        status.textContent = '✓ Vote on record · ' + state.mvpVoteCount + ' juror(s) have voted';
+        status.classList.add('success');
+      } else {
+        status.textContent = state.mvpVoteCount + ' juror(s) have voted';
+      }
+      actions.appendChild(submitBtn);
+      actions.appendChild(status);
+      body.appendChild(actions);
+
+      // If user is jury but not me yet (admin watching), show ballot but disable submit
+      if (state.isAdmin && (!state.me || state.me.email !== JURY_STATE.me?.email)) {
+        // admin can't vote, only watch
+      }
+    }
+
+    function renderMvpReveal(state, body) {
+      const winner = state.mvpWinner;
+      if (!winner) {
+        body.innerHTML = '<div class="mvp-state-pending"><div class="heading">No votes cast</div></div>';
+        return;
+      }
+
+      const reveal = document.createElement('div');
+      reveal.className = 'mvp-reveal';
+      reveal.style.borderColor = winner.tribe_color_hex;
+      reveal.style.boxShadow = '0 0 40px ' + winner.tribe_color_hex + '40';
+
+      const eyebrow = document.createElement('div');
+      eyebrow.className = 'mvp-reveal-eyebrow';
+      eyebrow.textContent = 'The Ultimate Roy-Hart Survivor is…';
+
+      const name = document.createElement('div');
+      name.className = 'mvp-reveal-name';
+      name.textContent = winner.name;
+
+      const tribePill = document.createElement('div');
+      tribePill.className = 'mvp-reveal-tribe';
+      tribePill.style.borderColor = winner.tribe_color_hex;
+      tribePill.style.color = winner.tribe_color_hex;
+      const sw = document.createElement('span');
+      sw.className = 'swatch';
+      sw.style.background = winner.tribe_color_hex;
+      const tribeText = document.createElement('span');
+      tribeText.textContent = winner.tribe_name;
+      tribePill.appendChild(sw);
+      tribePill.appendChild(tribeText);
+
+      const votes = document.createElement('div');
+      votes.className = 'mvp-reveal-votes';
+      votes.textContent = winner.votes + ' vote' + (winner.votes === 1 ? '' : 's') + ' from the jury';
+
+      reveal.appendChild(eyebrow);
+      reveal.appendChild(name);
+      reveal.appendChild(tribePill);
+      reveal.appendChild(votes);
+
+      // Full results breakdown
+      if (state.mvpResults && state.mvpResults.length > 1) {
+        const results = document.createElement('div');
+        results.className = 'mvp-reveal-results';
+        results.innerHTML = '<h4>Full Tally</h4>';
+        const list = document.createElement('ul');
+        list.className = 'mvp-tally-list';
+        list.style.listStyle = 'none';
+        list.style.padding = '0';
+        list.style.margin = '0';
+        state.mvpResults.forEach(function(r) {
+          const li = document.createElement('li');
+          li.style.display = 'flex';
+          li.style.justifyContent = 'space-between';
+          li.style.padding = '0.4rem 0';
+          li.style.borderBottom = '1px solid rgba(232, 221, 196, 0.08)';
+          li.style.fontSize = '1rem';
+          li.innerHTML =
+            '<span style="color: ' + r.tribe_color_hex + '">' + escapeHtmlJ(r.name) + '</span>' +
+            '<span style="font-family: var(--font-display); font-weight: 700; color: var(--ember);">' + r.votes + '</span>';
+          list.appendChild(li);
+        });
+        results.appendChild(list);
+        reveal.appendChild(results);
+      }
+
+      body.appendChild(reveal);
+    }
+
+    // ====================================================================
+    // ALL-TRIBES MIRROR
+    // ====================================================================
+    function onMirrorLoaded(view) {
+      MIRROR_VIEW = view;
+      // Build tabs once we have data
+      buildMirrorTabs();
+      renderMirror();
+    }
+
+    function buildMirrorTabs() {
+      const wrap = document.getElementById('mirrorTabs');
+      if (!MIRROR_VIEW) return;
+      // Only rebuild if empty (don't keep wiping selection state)
+      if (wrap.children.length > 0) return;
+      MIRROR_VIEW.tribes.forEach(function(t, idx) {
+        const tab = document.createElement('div');
+        tab.className = 'mirror-tab';
+        tab.dataset.action = 'select-mirror-tab';
+        tab.dataset.tribeId = t.id;
+        tab.style.setProperty('--tab-color', t.color_hex);
+        const sw = document.createElement('span');
+        sw.className = 'swatch';
+        sw.style.background = t.color_hex;
+        const lbl = document.createElement('span');
+        lbl.textContent = t.name;
+        tab.appendChild(sw);
+        tab.appendChild(lbl);
+        wrap.appendChild(tab);
+        if (idx === 0 && !SELECTED_MIRROR_TRIBE) SELECTED_MIRROR_TRIBE = t.id;
+      });
+      updateMirrorTabSelection();
+    }
+
+    function updateMirrorTabSelection() {
+      document.querySelectorAll('.mirror-tab').forEach(function(tab) {
+        tab.classList.toggle('selected', tab.dataset.tribeId === SELECTED_MIRROR_TRIBE);
+      });
+    }
+
+    function renderMirror() {
+      const content = document.getElementById('mirrorContent');
+      if (!MIRROR_VIEW || !MIRROR_VIEW.tribes) {
+        content.innerHTML = '<div class="mirror-empty">No data.</div>';
+        return;
+      }
+
+      let tribe = MIRROR_VIEW.tribes.filter(function(t) { return t.id === SELECTED_MIRROR_TRIBE; })[0];
+      if (!tribe) tribe = MIRROR_VIEW.tribes[0];
+      if (!tribe) return;
+      SELECTED_MIRROR_TRIBE = tribe.id;
+      updateMirrorTabSelection();
+
+      content.innerHTML = '';
+
+      // Header strip
+      const head = document.createElement('div');
+      head.className = 'mirror-stat-row';
+      head.style.marginBottom = '0.6rem';
+      head.innerHTML =
+        '<span><strong>Rank:</strong> #' + tribe.rank + '</span>' +
+        '<span><strong>Points:</strong> ' + tribe.points + '</span>' +
+        '<span><strong>Active:</strong> ' + tribe.activeCount + '</span>' +
+        '<span><strong>Jury:</strong> ' + tribe.juryCount + '</span>';
+      content.appendChild(head);
+
+      const grid = document.createElement('div');
+      grid.className = 'mirror-grid';
+
+      // Roster block
+      const rosterBlock = document.createElement('div');
+      rosterBlock.className = 'mirror-block';
+      rosterBlock.innerHTML = '<h4>Roster</h4>';
+      const roster = document.createElement('div');
+      roster.className = 'mirror-roster';
+      tribe.members.forEach(function(m) {
+        const row = document.createElement('div');
+        const cls = ['mirror-roster-row'];
+        if (m.status !== 'active') cls.push('snuffed');
+        else if (m.competed) cls.push('competed');
+        row.className = cls.join(' ');
+        row.textContent = m.name;
+        if (m.status !== 'active') {
+          const pill = document.createElement('span');
+          pill.className = 'pill-tiny';
+          pill.style.color = 'var(--ink-faded)';
+          pill.textContent = 'Jury';
+          row.appendChild(document.createTextNode(' '));
+          row.appendChild(pill);
+        } else if (m.competed) {
+          const pill = document.createElement('span');
+          pill.className = 'pill-tiny';
+          pill.style.color = 'var(--jade)';
+          pill.textContent = 'Competed';
+          row.appendChild(document.createTextNode(' '));
+          row.appendChild(pill);
+        }
+        roster.appendChild(row);
+      });
+      rosterBlock.appendChild(roster);
+
+      if (tribe.lockedCompetitors && tribe.lockedCompetitors.length > 0) {
+        const lockedHeading = document.createElement('h4');
+        lockedHeading.style.marginTop = '0.9rem';
+        lockedHeading.textContent = 'Locked Competitors';
+        rosterBlock.appendChild(lockedHeading);
+        const dayNames = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri' };
+        tribe.lockedCompetitors.forEach(function(entry) {
+          entry.members.forEach(function(m) {
+            const pill = document.createElement('span');
+            pill.className = 'mirror-locked-pill';
+            pill.textContent = (dayNames[entry.day] || entry.day) + ' · ' + m.name;
+            rosterBlock.appendChild(pill);
+          });
+        });
+      }
+      grid.appendChild(rosterBlock);
+
+      // Tallies block
+      const talliesBlock = document.createElement('div');
+      talliesBlock.className = 'mirror-block';
+      let talliesContent = '';
+
+      if (tribe.electionTallies) {
+        talliesContent += '<h4>Election Tally · ' + (MIRROR_VIEW.electionDay || '').toUpperCase() + '</h4>';
+        talliesContent += '<div style="font-size:0.95rem;color:var(--ink-cream-soft);margin-bottom:0.3rem;">' +
+          tribe.electionTallies.voters + ' tribe member(s) have voted</div>';
+        if (tribe.electionTallies.results.length === 0) {
+          talliesContent += '<div class="mirror-empty">No votes yet.</div>';
+        } else {
+          talliesContent += '<ul class="mirror-tally-list">';
+          tribe.electionTallies.results.forEach(function(r) {
+            talliesContent += '<li><span class="name">' + escapeHtmlJ(r.name) + '</span><span class="votes">' + r.votes + '</span></li>';
+          });
+          talliesContent += '</ul>';
+        }
+      }
+
+      if (tribe.councilTallies) {
+        if (talliesContent) talliesContent += '<div style="height:1rem;"></div>';
+        talliesContent += '<h4 style="color: var(--ember);">Council Tally · ' + (MIRROR_VIEW.councilDay || '').toUpperCase() + '</h4>';
+        talliesContent += '<div style="font-size:0.95rem;color:var(--ink-cream-soft);margin-bottom:0.3rem;">' +
+          tribe.councilTallies.voters + ' tribe member(s) have voted</div>';
+        if (tribe.councilTallies.results.length === 0) {
+          talliesContent += '<div class="mirror-empty">No votes yet.</div>';
+        } else {
+          talliesContent += '<ul class="mirror-tally-list">';
+          tribe.councilTallies.results.forEach(function(r) {
+            talliesContent += '<li><span class="name">' + escapeHtmlJ(r.name) + '</span><span class="votes">' + r.votes + '</span></li>';
+          });
+          talliesContent += '</ul>';
+        }
+      }
+
+      if (!talliesContent) {
+        talliesContent = '<h4>Tallies</h4><div class="mirror-empty">No active election or council.</div>';
+      }
+      talliesBlock.innerHTML = talliesContent;
+      grid.appendChild(talliesBlock);
+
+      content.appendChild(grid);
+
+      // Chat (full width below)
+      const chatBlock = document.createElement('div');
+      chatBlock.className = 'mirror-block';
+      chatBlock.style.marginTop = '1rem';
+      chatBlock.innerHTML = '<h4>Recent Chat (last 25)</h4>';
+      const chatWrap = document.createElement('div');
+      chatWrap.className = 'mirror-chat';
+      if (!tribe.chat || tribe.chat.length === 0) {
+        chatWrap.innerHTML = '<div class="mirror-empty">No messages.</div>';
+      } else {
+        tribe.chat.forEach(function(m) {
+          const msg = document.createElement('div');
+          msg.className = 'mirror-chat-msg';
+          const head = document.createElement('div');
+          const name = document.createElement('span');
+          name.className = 'mirror-chat-name';
+          name.style.color = tribe.color_hex;
+          name.textContent = m.name;
+          const time = document.createElement('span');
+          time.className = 'mirror-chat-time';
+          time.textContent = formatChatTime(m.timestamp);
+          head.appendChild(name);
+          head.appendChild(time);
+          const text = document.createElement('div');
+          text.className = 'mirror-chat-text';
+          text.textContent = m.message;
+          msg.appendChild(head);
+          msg.appendChild(text);
+          chatWrap.appendChild(msg);
+        });
+      }
+      chatBlock.appendChild(chatWrap);
+      content.appendChild(chatBlock);
+    }
+
+    // ====================================================================
+    // PONDEROSA CHAT
+    // ====================================================================
+    function renderPonderosa(state, autoScroll) {
+      const wrap = document.getElementById('ponderosaMessages');
+      const messages = state.juryChat || [];
+      if (messages.length === 0) {
+        wrap.innerHTML = '<div class="ponderosa-empty">No messages yet. Be the first.</div>';
+        return;
+      }
+      const wasAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 80;
+      wrap.innerHTML = '';
+      messages.forEach(function(m) {
+        const div = document.createElement('div');
+        const isMe = state.me && m.email && m.email.toLowerCase() === state.me.email.toLowerCase();
+        div.className = 'ponderosa-msg' + (isMe ? ' me' : '');
+
+        const head = document.createElement('div');
+        head.className = 'ponderosa-msg-head';
+        const name = document.createElement('span');
+        name.className = 'ponderosa-msg-name';
+        name.style.color = m.original_tribe_color_hex || '#888';
+        name.textContent = m.name + (isMe ? ' (you)' : '');
+        const tribe = document.createElement('span');
+        tribe.className = 'ponderosa-msg-tribe';
+        tribe.style.color = m.original_tribe_color_hex || '#888';
+        tribe.textContent = m.original_tribe_name ? '· ' + m.original_tribe_name : '';
+        const time = document.createElement('span');
+        time.className = 'ponderosa-msg-time';
+        time.textContent = formatChatTime(m.timestamp);
+        head.appendChild(name);
+        if (m.original_tribe_name) head.appendChild(tribe);
+        head.appendChild(time);
+
+        const text = document.createElement('div');
+        text.className = 'ponderosa-msg-text';
+        text.textContent = m.message;
+
+        div.appendChild(head);
+        div.appendChild(text);
+        wrap.appendChild(div);
+      });
+
+      if (wasAtBottom || autoScroll) wrap.scrollTop = wrap.scrollHeight;
+    }
+
+    function handlePonderosaSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('ponderosaInput');
+      const text = input.value.trim();
+      if (!text) return false;
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function() {
+          input.value = '';
+          btn.disabled = false;
+          input.focus();
+          pollState();
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          showToast(err.message || 'Send failed', 'error');
+        })
+        .postJuryChatMessage(text);
+      return false;
+    }
+
+    // ====================================================================
+    // EVENT DELEGATION
+    // ====================================================================
+    function handleClick(e) {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+
+      switch (action) {
+        case 'select-mirror-tab':
+          SELECTED_MIRROR_TRIBE = target.dataset.tribeId;
+          updateMirrorTabSelection();
+          renderMirror();
+          break;
+        case 'select-mvp':
+          SELECTED_MVP_ID = target.dataset.candidateId;
+          // Update tile classes locally without full re-render
+          document.querySelectorAll('.mvp-candidate').forEach(function(tile) {
+            const isSel = tile.dataset.candidateId === SELECTED_MVP_ID;
+            tile.classList.toggle('selected', isSel);
+            const mark = tile.querySelector('.pick-mark');
+            if (mark) mark.textContent = isSel ? '✓' : '';
+          });
+          break;
+        case 'submit-mvp':
+          submitMvp();
+          break;
+      }
+    }
+
+    function submitMvp() {
+      if (!SELECTED_MVP_ID) {
+        showToast('Pick a candidate first', 'error');
+        return;
+      }
+      const status = document.getElementById('mvpStatus');
+      if (status) {
+        status.textContent = 'Saving…';
+        status.className = 'mvp-status';
+      }
+      google.script.run
+        .withSuccessHandler(function() {
+          if (status) {
+            status.textContent = '✓ Vote on record';
+            status.className = 'mvp-status success';
+          }
+          showToast('MVP vote saved', 'success');
+          pollState();
+        })
+        .withFailureHandler(function(err) {
+          if (status) {
+            status.textContent = err.message || 'Save failed';
+            status.className = 'mvp-status error';
+          }
+          showToast(err.message || 'Save failed', 'error');
+        })
+        .submitMvpVote(SELECTED_MVP_ID);
+    }
+
+    // ====================================================================
+    // UTILITIES
+    // ====================================================================
+    function formatChatTime(iso) {
+      try {
+        const d = new Date(iso);
+        const now = new Date();
+        const sameDay = d.toDateString() === now.toDateString();
+        const opts = { hour: 'numeric', minute: '2-digit' };
+        if (!sameDay) { opts.month = 'short'; opts.day = 'numeric'; }
+        return d.toLocaleTimeString([], opts);
+      } catch (e) { return ''; }
+    }
+
+    function showToast(msg, kind) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (kind ? (' ' + kind) : '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.className = 'toast'; }, 2400);
+    }
+
+    function showFatal(err) {
+      document.getElementById('juryHeadline').textContent = 'Connection Failed';
+      document.getElementById('juryDetail').textContent = (err && err.message) ? err.message : String(err);
+    }
+
+    function escapeHtmlJ(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
