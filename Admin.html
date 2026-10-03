@@ -1,0 +1,3617 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Styles') ?>
+  <style>
+    /* Roster Manager UI */
+    .roster-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem 1rem;
+      margin-top: 0.8rem;
+    }
+    .roster-form label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 0.35rem;
+    }
+    .roster-form input[type="text"],
+    .roster-form input[type="email"] {
+      width: 100%;
+      padding: 0.7rem 0.85rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--ink);
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(26, 20, 16, 0.2);
+      border-radius: 2px;
+      transition: border-color 150ms var(--ease-snap), background 150ms var(--ease-snap);
+    }
+    .roster-form input:focus {
+      outline: none;
+      border-color: var(--ember);
+      background: rgba(255,255,255,0.8);
+    }
+    .roster-form .field-tribe { grid-column: 1 / -1; }
+    .roster-form .field-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .roster-form .field-status {
+      grid-column: 1 / -1;
+      min-height: 1.4rem;
+      font-size: 1rem;
+      font-style: italic;
+    }
+    .roster-form .field-status.error   { color: var(--blood); }
+    .roster-form .field-status.success { color: var(--jade); }
+
+    .tribe-picker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.6rem;
+    }
+    .tribe-picker.loading {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-faded);
+      font-style: italic;
+    }
+    .tribe-tile {
+      padding: 0.85rem 1rem;
+      border: 2px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      transition: all 150ms var(--ease-snap);
+      background: rgba(0,0,0,0.04);
+      user-select: none;
+    }
+    .tribe-tile:hover { background: rgba(0,0,0,0.08); }
+    .tribe-tile.selected {
+      border-color: var(--ink);
+      background: rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .tribe-tile .swatch {
+      width: 22px; height: 22px;
+      border-radius: 3px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.25) inset;
+      flex-shrink: 0;
+    }
+    .tribe-tile .label {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .roster-summary {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .roster-summary strong {
+      font-size: 1.5rem;
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-weight: 600;
+      letter-spacing: 0;
+      margin-right: 0.4rem;
+    }
+
+    .tribe-section {
+      margin-top: 1.4rem;
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .tribe-section-header {
+      padding: 0.8rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--parchment);
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 1.02rem;
+    }
+    .tribe-section-header .swatch {
+      width: 18px; height: 18px;
+      border-radius: 3px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.3) inset;
+    }
+    .tribe-section-header .count {
+      margin-left: auto;
+      font-size: 0.88rem;
+      letter-spacing: 0.12em;
+      opacity: 0.85;
+    }
+    .tribe-section-body { background: rgba(255,255,255,0.4); }
+    .tribe-section-body.empty {
+      padding: 1.1rem;
+      color: var(--ink-faded);
+      font-style: italic;
+      text-align: center;
+      font-size: 1.05rem;
+    }
+
+    .roster-row {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr auto;
+      gap: 1rem;
+      padding: 0.7rem 1rem;
+      border-top: 1px solid rgba(26, 20, 16, 0.08);
+      align-items: center;
+    }
+    .roster-row:first-child { border-top: 0; }
+    .roster-row .name { color: var(--ink); font-weight: 500; font-size: 1.05rem; }
+    .roster-row .email {
+      color: var(--ink-soft);
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      word-break: break-all;
+    }
+    .roster-row .actions { display: flex; gap: 0.5rem; }
+    .icon-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--ink-soft);
+      padding: 0.4rem 0.8rem;
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 150ms var(--ease-snap);
+      border-radius: 2px;
+    }
+    .icon-btn:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+      background: rgba(0,0,0,0.05);
+    }
+    .icon-btn.danger:hover {
+      border-color: var(--blood);
+      color: var(--blood);
+      background: rgba(139, 45, 41, 0.08);
+    }
+
+    .roster-row.editing {
+      background: rgba(226, 114, 63, 0.08);
+      grid-template-columns: 1fr;
+      gap: 0.6rem;
+    }
+    .roster-row.editing input {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: white;
+      border: 1px solid rgba(26, 20, 16, 0.2);
+      border-radius: 2px;
+    }
+    .roster-row.editing .edit-row {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr auto;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .roster-loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--ink-faded);
+      font-style: italic;
+      font-size: 1.05rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 0.85rem 1.4rem;
+      background: var(--ink);
+      color: var(--parchment);
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      box-shadow: var(--shadow-deep);
+      z-index: 1000;
+      transition: transform 300ms var(--ease-stage);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--blood); }
+    .toast.success { background: #2D5C3D; }
+
+    .danger-zone {
+      margin-top: 2rem;
+      padding-top: 1.2rem;
+      border-top: 1px dashed rgba(26, 20, 16, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .danger-zone .label {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+    }
+    .btn-danger {
+      border-color: var(--blood);
+      color: var(--blood);
+    }
+    .btn-danger:hover {
+      background: var(--blood);
+      color: var(--parchment);
+      border-color: var(--blood);
+    }
+
+    @media (max-width: 600px) {
+      .roster-form { grid-template-columns: 1fr; }
+      .roster-row, .roster-row.editing .edit-row { grid-template-columns: 1fr; }
+      .roster-row .actions { justify-content: flex-end; }
+    }
+
+    /* =====================================================================
+       PHASE 4 — ESCAPE ROOM EDITOR
+       ===================================================================== */
+    .clue-card {
+      padding: 1.2rem 1.4rem;
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      background: rgba(255,255,255,0.4);
+      margin-bottom: 1rem;
+    }
+    .clue-card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      margin-bottom: 0.6rem;
+    }
+    .clue-number-badge {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--ember-deep);
+      letter-spacing: 0.04em;
+    }
+    .clue-card-title-input {
+      flex: 1;
+      padding: 0.5rem 0.7rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      border-radius: 2px;
+    }
+    .clue-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem 1rem;
+      margin-top: 0.7rem;
+    }
+    .clue-field { display: flex; flex-direction: column; }
+    .clue-field.full { grid-column: 1 / -1; }
+    .clue-field label {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 0.3rem;
+    }
+    .clue-field input, .clue-field textarea {
+      padding: 0.65rem 0.8rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--ink);
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      border-radius: 2px;
+    }
+    .clue-field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+    .clue-field input:focus, .clue-field textarea:focus {
+      outline: none;
+      border-color: var(--ember-deep);
+    }
+    .clue-card-actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .clue-status {
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+    .clue-status.success { color: var(--jade); }
+    .clue-status.error { color: var(--blood); }
+
+    .clue-image-help {
+      grid-column: 1 / -1;
+      margin-top: 0.4rem;
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+      font-style: italic;
+      line-height: 1.5;
+    }
+    .clue-image-help strong {
+      color: var(--ink);
+      font-style: normal;
+      font-weight: 600;
+    }
+    .clue-image-preview {
+      margin-top: 0.7rem;
+      padding: 0.6rem;
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px dashed rgba(26, 20, 16, 0.2);
+      border-radius: 2px;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .clue-image-preview img {
+      max-width: 100%;
+      max-height: 240px;
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      background: white;
+    }
+    .clue-image-empty {
+      color: var(--ink-faded);
+      font-style: italic;
+      font-size: 0.92rem;
+    }
+    .clue-image-error {
+      color: var(--blood);
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    /* datetime-local picker styling — make it match the rest */
+    .clue-field input[type="datetime-local"] {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      border-radius: 2px;
+      padding: 0.65rem 0.8rem;
+    }
+    .clue-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.7;
+    }
+    .clue-field input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
+
+    /* Escape Room Live Monitor */
+    .er-monitor-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .er-monitor-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 180px;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.7rem 0.9rem;
+      background: rgba(255,255,255,0.4);
+      border-left: 3px solid;
+    }
+    .er-monitor-place {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+    }
+    .er-monitor-tribe { min-width: 0; }
+    .er-monitor-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .er-monitor-detail {
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+      margin-top: 0.18rem;
+    }
+    .er-monitor-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.25rem;
+      height: 18px;
+    }
+    .er-monitor-seg {
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.1) inset;
+      transition: background 250ms var(--ease-snap);
+    }
+    @media (max-width: 600px) {
+      .er-monitor-row { grid-template-columns: 50px 1fr; }
+      .er-monitor-bar { grid-column: 1 / -1; }
+    }
+
+    /* =====================================================================
+       TAB NAVIGATION
+       ===================================================================== */
+    .admin-tabs {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(232, 221, 196, 0.15);
+    }
+    .admin-tab {
+      padding: 0.7rem 1.2rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--ink-cream-soft);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 2px 2px 0 0;
+      transition: all 120ms var(--ease-snap);
+      position: relative;
+      bottom: -1px;
+    }
+    .admin-tab:hover {
+      color: var(--parchment);
+      background: rgba(232, 221, 196, 0.04);
+    }
+    .admin-tab.active {
+      color: var(--ember);
+      background: var(--parchment);
+      border-color: rgba(232, 221, 196, 0.15);
+      border-bottom-color: var(--parchment);
+    }
+    .admin-tab-danger {
+      color: rgba(229, 141, 136, 0.85);
+      margin-left: auto;
+    }
+    .admin-tab-danger:hover {
+      color: #E58D88;
+      background: rgba(200, 51, 43, 0.08);
+    }
+    .admin-tab-danger.active {
+      color: var(--blood);
+      background: var(--parchment);
+    }
+
+    /* Tab pane visibility — only the active pane is shown */
+    .admin-pane { display: none; }
+    .admin-pane.active { display: block; }
+
+    /* =====================================================================
+       EMERGENCY TAB
+       ===================================================================== */
+    .emergency-form-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .emergency-form-row select {
+      flex: 1;
+      min-width: 220px;
+      padding: 0.55rem 0.75rem;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(26, 20, 16, 0.18);
+      border-radius: 2px;
+    }
+    .emergency-form-row select option {
+      background: white;
+      color: var(--ink);
+    }
+    .admin-pane-emergency .btn-danger {
+      background: var(--blood);
+      color: var(--parchment);
+      border: 1px solid var(--blood);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.65rem 1.1rem;
+      cursor: pointer;
+    }
+    .admin-pane-emergency .btn-danger:hover { background: #6E2421; }
+
+    .emergency-elim-members {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.4rem;
+      padding: 0.7rem;
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(26, 20, 16, 0.1);
+      border-radius: 2px;
+    }
+    .emergency-elim-member {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--ink);
+      padding: 0.3rem 0;
+    }
+    .emergency-elim-member input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* =====================================================================
+       DAY CONTROLS PANEL — vertical checklist
+       ===================================================================== */
+    .dc-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.4rem;
+    }
+    .dc-refresh-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--ink-soft);
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 120ms var(--ease-snap);
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .dc-refresh-btn:hover {
+      background: var(--ink);
+      color: var(--parchment);
+    }
+    .dc-status-banner {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      padding: 1rem 1.2rem;
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(26, 20, 16, 0.1);
+      border-left: 3px solid var(--ink);
+      margin-bottom: 1rem;
+    }
+    .dc-status-day {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+    .dc-status-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .dc-status-day strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--ink);
+    }
+    .dc-status-challenge {
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+    .dc-status-pills {
+      display: flex;
+      gap: 0.4rem;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+    .dc-status-pill {
+      padding: 0.22rem 0.7rem;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: 0.74rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .dc-status-pill.open { background: rgba(226, 114, 63, 0.18); color: var(--ember-deep); }
+    .dc-status-pill.open.council { background: rgba(200, 51, 43, 0.16); color: var(--blood); }
+    .dc-status-pill.idle { background: rgba(0,0,0,0.06); color: var(--ink-soft); }
+
+    .dc-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .dc-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: rgba(255, 255, 255, 0.45);
+      border: 1px solid rgba(26, 20, 16, 0.12);
+      border-left: 3px solid rgba(26, 20, 16, 0.2);
+      align-items: start;
+    }
+    .dc-row-active {
+      border-left-color: var(--ember-deep);
+      background: rgba(226, 114, 63, 0.08);
+      box-shadow: 0 0 18px rgba(226, 114, 63, 0.08);
+    }
+    .dc-row-done {
+      border-left-color: var(--jade);
+      background: rgba(74, 140, 104, 0.06);
+    }
+    .dc-row-disabled {
+      opacity: 0.55;
+    }
+    .dc-row-status {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.4rem;
+      line-height: 1;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .dc-row-active .dc-row-status {
+      background: var(--ember-deep);
+      color: white;
+      animation: dcPulse 2s ease-in-out infinite;
+    }
+    .dc-row-done .dc-row-status {
+      background: var(--jade);
+      color: white;
+    }
+    .dc-row-pending .dc-row-status,
+    .dc-row-disabled .dc-row-status {
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--ink-soft);
+      font-size: 1rem;
+    }
+    @keyframes dcPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(226, 114, 63, 0.45); }
+      50%      { box-shadow: 0 0 0 6px rgba(226, 114, 63, 0); }
+    }
+
+    .dc-row-body { min-width: 0; }
+    .dc-row-step {
+      font-family: var(--font-display);
+      font-size: 0.74rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 0.15rem;
+    }
+    .dc-row-active .dc-row-step { color: var(--ember-deep); }
+    .dc-row-done .dc-row-step { color: var(--jade); }
+    .dc-row-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      margin-bottom: 0.3rem;
+    }
+    .dc-row-detail {
+      font-size: 0.93rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+    .dc-row-detail strong { color: var(--ink); }
+
+    .dc-row-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      align-items: flex-end;
+      align-self: center;
+    }
+    .dc-row-actions .btn {
+      padding: 0.6rem 1rem;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dc-row-actions .btn-primary {
+      background: var(--ember-deep);
+      color: white;
+      border: 1px solid var(--ember-deep);
+    }
+    .dc-row-actions .btn-primary:hover { background: #C25831; }
+    .dc-row-actions .btn-faded {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--ink-soft);
+      border: 1px solid rgba(26, 20, 16, 0.15);
+    }
+    .dc-row-actions .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Day picker pills */
+    .dc-day-picker {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.6rem;
+    }
+    .dc-day-pill {
+      padding: 0.55rem 0.9rem;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(26, 20, 16, 0.18);
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.1rem;
+      min-width: 96px;
+      transition: all 100ms var(--ease-snap);
+    }
+    .dc-day-pill:hover {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: var(--ink-soft);
+    }
+    .dc-day-pill.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--parchment);
+    }
+    .dc-day-pill strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .dc-day-pill span {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+    .dc-day-pill.active span { color: rgba(243, 237, 216, 0.7); }
+
+    /* Placements grid */
+    .dc-placements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.7rem;
+    }
+    .dc-placement-row {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.5rem 0.7rem;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(26, 20, 16, 0.12);
+      border-radius: 2px;
+    }
+    .dc-tribe-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+    .dc-tribe-label {
+      flex: 1;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      min-width: 0;
+    }
+    .dc-placement-input {
+      width: 56px;
+      padding: 0.45rem 0.5rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-align: center;
+      color: var(--ink);
+      background: white;
+      border: 1px solid rgba(26, 20, 16, 0.2);
+      border-radius: 2px;
+    }
+    .dc-placement-input:focus {
+      outline: none;
+      border-color: var(--ember-deep);
+      box-shadow: 0 0 0 3px rgba(226, 114, 63, 0.15);
+    }
+
+    /* Tribe pill picker (council tribe selection) */
+    .dc-tribe-picker { margin-top: 0.7rem; }
+    .dc-tribe-suggested {
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.6rem;
+    }
+    .dc-tribe-suggested.faint { font-style: italic; }
+    .dc-tribe-suggested-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .dc-tribe-pills {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .dc-tribe-pill {
+      padding: 0.55rem 0.9rem;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1.5px solid rgba(26, 20, 16, 0.18);
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      transition: all 120ms var(--ease-snap);
+    }
+    .dc-tribe-pill:hover {
+      background: white;
+      border-color: var(--pill-color, var(--ink-soft));
+    }
+    .dc-tribe-pill.selected {
+      background: var(--pill-color, var(--ink));
+      border-color: var(--pill-color, var(--ink));
+      color: white;
+      box-shadow: 0 0 18px var(--pill-color);
+    }
+    .dc-tribe-pill.selected .dc-pill-dot {
+      background: white !important;
+    }
+    .dc-pill-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 720px) {
+      .dc-row {
+        grid-template-columns: 32px 1fr;
+        gap: 0.7rem;
+      }
+      .dc-row-actions {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: stretch;
+        margin-top: 0.5rem;
+      }
+      .dc-row-actions .btn { flex: 1; }
+      .dc-status-banner { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+      .dc-status-pills { margin-left: 0; }
+    }
+
+    /* =====================================================================
+       PHASE 4 — IDOL CONTROLS (now two idols)
+       ===================================================================== */
+    .idol-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.4rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 800px) {
+      .idol-grid { grid-template-columns: 1fr; }
+    }
+    .idol-card {
+      padding: 1.2rem 1.4rem;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      border-top: 4px solid;
+    }
+    .idol-card-rammy { border-top-color: #C8332B; }
+    .idol-card-bear  { border-top-color: #6B3FA0; }
+    .idol-card-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      margin-bottom: 0.6rem;
+    }
+    .idol-card-name {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .idol-card.idol-card-rammy .idol-card-name { color: #C8332B; }
+    .idol-card.idol-card-bear  .idol-card-name { color: #6B3FA0; }
+
+    .idol-state-banner {
+      padding: 1rem 1.2rem;
+      border-left: 4px solid;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,0.4);
+    }
+    .idol-state-banner.unset    { border-left-color: var(--ink-faded); }
+    .idol-state-banner.hidden   { border-left-color: var(--ember); background: rgba(226, 114, 63, 0.06); }
+    .idol-state-banner.claimed  { border-left-color: var(--jade); background: rgba(74, 140, 104, 0.08); }
+    .idol-state-banner.played   { border-left-color: var(--blood); background: rgba(139, 45, 41, 0.08); }
+    .idol-state-banner .label {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .idol-state-banner .headline {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+    }
+    .idol-state-banner .detail {
+      color: var(--ink-soft);
+      font-size: 1rem;
+      margin-top: 0.3rem;
+    }
+
+    .idol-form-row {
+      display: flex;
+      gap: 0.6rem;
+      margin: 0.7rem 0;
+      flex-wrap: wrap;
+    }
+    .idol-form-row input, .idol-form-row textarea {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.6rem 0.8rem;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(26, 20, 16, 0.15);
+      border-radius: 2px;
+    }
+    .idol-form-row input:focus, .idol-form-row textarea:focus {
+      outline: none;
+      border-color: var(--ember-deep);
+    }
+    .hint-log {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 0.75rem 1rem;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(26, 20, 16, 0.1);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+    .hint-log .hint { padding: 0.2rem 0; }
+    .hint-log .empty { color: var(--ink-faded); font-style: italic; }
+
+    .idol-section-heading {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 1.2rem 0 0.5rem;
+    }
+
+    /* =====================================================================
+       PHASE 4 — ALL-TRIBES MIRROR
+       ===================================================================== */
+    .mirror-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      border-bottom: 1px solid rgba(26, 20, 16, 0.15);
+      padding-bottom: 0.4rem;
+    }
+    .mirror-tab {
+      padding: 0.6rem 1.05rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 2px;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--ink-soft);
+      background: transparent;
+      transition: all 150ms var(--ease-snap);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+    }
+    .mirror-tab:hover { background: rgba(0,0,0,0.05); color: var(--ink); }
+    .mirror-tab.selected {
+      background: rgba(0,0,0,0.06);
+      border-color: var(--tab-color, var(--ember));
+      color: var(--ink);
+    }
+    .mirror-tab .swatch {
+      width: 14px; height: 14px;
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.3) inset;
+      flex-shrink: 0;
+    }
+
+    .mirror-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 800px) {
+      .mirror-grid { grid-template-columns: 1fr; }
+    }
+
+    .mirror-block {
+      padding: 1rem 1.1rem;
+      background: rgba(255,255,255,0.4);
+      border: 1px solid rgba(26, 20, 16, 0.1);
+    }
+    .mirror-block h4 {
+      margin: 0 0 0.7rem;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .mirror-stat-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 0.4rem;
+    }
+    .mirror-stat-row strong { font-weight: 700; }
+    .mirror-roster {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.4rem 1rem;
+    }
+    .mirror-roster-row {
+      font-size: 0.95rem;
+      color: var(--ink);
+      padding: 0.3rem 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.5rem;
+      line-height: 1.3;
+    }
+    .mirror-roster-row .name {
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+    .mirror-roster-row.snuffed { color: var(--ink-faded); }
+    .mirror-roster-row.snuffed .name { text-decoration: line-through; }
+    .mirror-roster-row.competed { color: var(--jade); font-weight: 600; }
+    .mirror-roster-row .pill-tiny {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .mirror-tally-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.4rem 0 0;
+    }
+    .mirror-tally-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid rgba(26,20,16,0.06);
+      font-size: 1rem;
+    }
+    .mirror-tally-list li:last-child { border-bottom: 0; }
+    .mirror-tally-list .name { color: var(--ink); }
+    .mirror-tally-list .votes {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--ember-deep);
+      font-variant-numeric: tabular-nums;
+      font-size: 1.1rem;
+    }
+    .mirror-chat {
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 0.7rem 0.9rem;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(26, 20, 16, 0.08);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .mirror-chat-msg { margin-bottom: 0.5rem; }
+    .mirror-chat-msg:last-child { margin-bottom: 0; }
+    .mirror-chat-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--tribe-color, var(--ember-deep));
+      font-size: 0.92rem;
+      margin-right: 0.5rem;
+    }
+    .mirror-chat-time {
+      font-size: 0.85rem;
+      color: var(--ink-faded);
+      font-variant-numeric: tabular-nums;
+    }
+    .mirror-chat-text { color: var(--ink); margin-top: 0.1rem; }
+    .mirror-empty { color: var(--ink-faded); font-style: italic; padding: 0.5rem 0; font-size: 0.95rem; }
+    .mirror-locked-pill {
+      display: inline-block;
+      padding: 0.25rem 0.7rem;
+      margin: 0.18rem 0.32rem 0.18rem 0;
+      background: rgba(74, 140, 104, 0.15);
+      color: var(--jade);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 600;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <?!= include('Header', {userEmail: userEmail, userRole: userRole, scriptUrl: scriptUrl, pageView: pageView}) ?>
+
+  <main class="shell">
+    <section class="scaffold-hero stagger">
+      <div class="eyebrow" style="color: var(--rh-purple);">Game Master</div>
+      <h1 class="display-xl">Admin Console</h1>
+      <div class="ornament">✦ ✦ ✦</div>
+      <p style="max-width: 60ch; margin: 0 auto; color: var(--ink-cream-soft); font-size: 1.05rem;">
+        Welcome, <strong style="color: var(--parchment);"><?= userEmail ?></strong>.
+        You have full administrative access to the contest.
+      </p>
+    </section>
+
+    <!-- ============================================================
+         TAB NAVIGATION
+         ============================================================ -->
+    <nav class="admin-tabs" role="tablist">
+      <button type="button" class="admin-tab" data-action="select-tab" data-tab="day">Day Controls</button>
+      <button type="button" class="admin-tab" data-action="select-tab" data-tab="mirror">All-Tribes Mirror</button>
+      <button type="button" class="admin-tab" data-action="select-tab" data-tab="idols">Idols</button>
+      <button type="button" class="admin-tab" data-action="select-tab" data-tab="escape">Escape Room</button>
+      <button type="button" class="admin-tab" data-action="select-tab" data-tab="roster">Roster Manager</button>
+      <button type="button" class="admin-tab" data-action="select-tab" data-tab="diagnostic">Diagnostic</button>
+      <button type="button" class="admin-tab admin-tab-danger" data-action="select-tab" data-tab="emergency">Emergency</button>
+    </nav>
+
+    <!-- ============================================================
+         DAY CONTROLS — primary daily-rhythm panel
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-day" data-pane="day" style="animation-delay: 100ms; margin-top: 1.4rem; border-top: 4px solid var(--ember-deep);">
+      <div class="dc-header-row">
+        <div>
+          <div class="eyebrow">Day Controls</div>
+          <h2 style="margin-bottom: 0.4rem;">Run the Day</h2>
+        </div>
+        <button type="button" class="dc-refresh-btn" data-action="dc-refresh-all" title="Pull fresh state from server (no auto-refresh; use after another admin makes a change)">
+          ↻ Refresh
+        </button>
+      </div>
+      <p style="color: var(--ink-soft); font-size: 0.96rem; margin-bottom: 1.2rem;">
+        Your daily checklist. <strong>8&nbsp;AM</strong> close election → run challenge → <strong>2&nbsp;PM</strong> enter placements + open council → <strong>6&nbsp;PM</strong> close council + open next day.
+      </p>
+      <div id="dayControlsPanel">
+        <div class="roster-loading">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ALL-TRIBES MIRROR — what you stare at all day
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-mirror" data-pane="mirror" style="animation-delay: 200ms; margin-top: 1.4rem;">
+      <div class="eyebrow">All-Tribes Mirror</div>
+      <h2>Look Inside Every Tribe</h2>
+      <div class="ornament">✦</div>
+      <p style="color: var(--ink-soft); font-size: 0.95rem;">
+        Read-only window into each tribe — their roster, current vote tallies, locked competitors, and recent chat. Refreshes every 8 seconds.
+      </p>
+      <div id="mirrorTabs" class="mirror-tabs" style="margin-top: 1rem;"></div>
+      <div id="mirrorContent" style="margin-top: 1rem;">
+        <div class="roster-loading" style="text-align:center; padding:2rem; color:var(--ink-faded); font-style:italic;">Loading…</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         IDOL CONTROLS — Rammy + Bear, side-by-side
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-idols" data-pane="idols" style="animation-delay: 280ms; margin-top: 1.4rem;">
+      <div class="eyebrow">Hidden Immunity Idols</div>
+      <h2>Rammy &amp; The Bear</h2>
+      <div class="ornament">✦</div>
+      <div id="idolPanel" style="margin-top: 1rem;">
+        <div class="roster-loading" style="text-align:center; padding:2rem; color:var(--ink-faded); font-style:italic;">Loading idol state…</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ESCAPE ROOM EDITOR + LIVE MONITOR
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-escape" data-pane="escape" style="animation-delay: 320ms; margin-top: 1.4rem;">
+      <div class="eyebrow">Escape Room Editor</div>
+      <h2>Thursday's Clues</h2>
+      <div class="ornament">✦</div>
+      <p style="color: var(--ink-soft); font-size: 0.95rem;">
+        Edit the 4 sequential clues for Thursday's escape room. Release time controls when the next clue unlocks for tribes that are racing ahead. Cipher answer is matched case-insensitively.
+      </p>
+      <div id="escapeRoomEditor" style="margin-top: 1.2rem;">
+        <div class="roster-loading" style="text-align:center; padding:2rem; color:var(--ink-faded); font-style:italic;">Loading clues…</div>
+      </div>
+
+      <div class="idol-section-heading">Live Progress Monitor</div>
+      <p style="color: var(--ink-soft); font-size: 0.92rem; margin: 0 0 0.7rem;">
+        Watch each tribe's progress through the escape room in real time. Refreshes every 8 seconds.
+      </p>
+      <div id="escapeRoomMonitor">
+        <div class="roster-loading" style="text-align:center; padding:1.4rem; color:var(--ink-faded); font-style:italic;">Loading progress…</div>
+      </div>
+      <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed rgba(26, 20, 16, 0.2);">
+        <button class="btn btn-on-parchment" data-action="compute-er-placements">Auto-Compute Placements (1st–6th)</button>
+        <span style="margin-left: 0.6rem; color: var(--ink-soft); font-size: 0.88rem; font-style: italic;">Writes results to Thursday's challenge based on finishing order.</span>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ROSTER MANAGER — touched at setup, rarely during the week
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-roster" data-pane="roster" style="animation-delay: 360ms; margin-top: 1.4rem;">
+      <div class="eyebrow">Roster Manager</div>
+      <h2>The Castaways</h2>
+      <div class="ornament">✦</div>
+
+      <div class="roster-summary">
+        <span><strong id="totalCount">—</strong>Total</span>
+        <span><strong id="activeCount">—</strong>Active</span>
+        <span><strong id="juryCount">—</strong>Jury</span>
+      </div>
+
+      <h3 style="margin-top: 1.5rem;">Add a Castaway</h3>
+      <form id="addMemberForm" class="roster-form">
+        <div>
+          <label for="addName">Full Name</label>
+          <input type="text" id="addName" placeholder="Casey Morgan" autocomplete="off">
+        </div>
+        <div>
+          <label for="addEmail">Email</label>
+          <input type="email" id="addEmail" placeholder="cmorgan@royhart.org" autocomplete="off">
+        </div>
+        <div class="field-tribe">
+          <label>Tribe</label>
+          <div id="addTribePicker" class="tribe-picker loading">Loading tribes…</div>
+        </div>
+        <div class="field-actions">
+          <button type="submit" class="btn btn-primary">Add Castaway</button>
+          <button type="button" class="btn btn-on-parchment" data-action="clear-add-form">Clear</button>
+        </div>
+        <div id="addStatus" class="field-status"></div>
+      </form>
+
+      <div id="rosterList" style="margin-top: 1.5rem;">
+        <div class="roster-loading">Loading roster…</div>
+      </div>
+
+      <div class="danger-zone">
+        <span class="label">Danger Zone</span>
+        <button type="button" class="btn btn-danger" data-action="wipe-roster">Wipe Entire Roster</button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         DIAGNOSTIC INFO — sanity check; rarely used after setup
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-diagnostic" data-pane="diagnostic" style="animation-delay: 400ms; margin-top: 1.4rem;">
+      <div class="eyebrow">Diagnostic</div>
+      <h2>System Status</h2>
+      <div class="ornament">✦</div>
+
+      <div class="scaffold-grid" style="margin-top: 1.4rem;">
+        <div class="scaffold-tile" style="background: var(--ink); border-color: var(--ink-soft);">
+          <h3>Your identity</h3>
+          <p><span style="color: var(--ember);">Email:</span> <span class="mono"><?= userEmail ?></span></p>
+          <p><span style="color: var(--ember);">Role:</span> <span class="mono"><?= userRole ?></span></p>
+        </div>
+        <div class="scaffold-tile" style="background: var(--ink); border-color: var(--ink-soft);">
+          <h3>The Six Tribes</h3>
+          <div id="diagnosticTribes"><em style="color: var(--ink-faded);">Loading…</em></div>
+        </div>
+        <div class="scaffold-tile" style="background: var(--ink); border-color: var(--ink-soft);">
+          <h3>Admin Allowlist</h3>
+          <div id="diagnosticAdmins"><em style="color: var(--ink-faded);">Loading…</em></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem; text-align: center;">
+        <a href="<?= scriptUrl ?>?view=contest" class="btn btn-on-parchment">View Contest Dashboard</a>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         EMERGENCY — destructive / rarely-used controls (own tab)
+         ============================================================ -->
+    <section class="parchment fade-up admin-pane admin-pane-emergency" data-pane="emergency" style="animation-delay: 200ms; margin-top: 1.4rem; border-top: 4px solid var(--blood);">
+      <div class="eyebrow" style="color: var(--blood);">Emergency Controls</div>
+      <h2>Use With Care</h2>
+      <div class="ornament">✦</div>
+      <p style="color: var(--ink-soft); font-size: 0.95rem; max-width: 60ch;">
+        These controls bypass the normal contest flow. Most are useful only in unusual circumstances — players quitting, ceremonies needing a re-run for testing, an entire tribe needing to dissolve. <strong>Read each tooltip before clicking.</strong>
+      </p>
+
+      <h3 style="margin-top: 1.6rem;">Tribe Dissolve</h3>
+      <p style="color: var(--ink-soft); font-size: 0.92rem; max-width: 60ch;">
+        Use when a tribe has dropped to ≤2 active members. Active members are redistributed across remaining tribes (smallest-first). The dissolved tribe stops competing.
+      </p>
+      <div class="emergency-form-row">
+        <select id="emergencyDissolveSelect">
+          <option value="">— Pick a tribe to dissolve —</option>
+        </select>
+        <button type="button" class="btn btn-danger" data-action="emergency-dissolve">Dissolve + Redistribute</button>
+      </div>
+
+      <h3 style="margin-top: 1.6rem;">Manual Eliminations</h3>
+      <p style="color: var(--ink-soft); font-size: 0.92rem; max-width: 60ch;">
+        Force-eliminate a member outside of a tribal council vote. Useful only when someone quits or needs to be removed from the contest. The normal council flow handles routine eliminations — use Day Controls Step 4 for those.
+      </p>
+      <div class="emergency-form-row">
+        <select id="emergencyElimTribeSelect">
+          <option value="">— Pick tribe —</option>
+        </select>
+      </div>
+      <div id="emergencyElimMembers" class="emergency-elim-members" style="margin-top: 0.5rem;">
+        <div style="color: var(--ink-faded); font-style: italic; font-size: 0.9rem;">Pick a tribe to see members.</div>
+      </div>
+      <div class="emergency-form-row" style="margin-top: 0.7rem;">
+        <button type="button" class="btn btn-danger" data-action="emergency-eliminate">Eliminate Selected</button>
+      </div>
+
+      <h3 style="margin-top: 1.6rem;">MVP Voting Reset</h3>
+      <p style="color: var(--ink-soft); font-size: 0.92rem; max-width: 60ch;">
+        Wipe all jury MVP votes and return MVP voting to "not started" state. Use only if the Friday reveal goes wrong and you need a do-over.
+      </p>
+      <div class="emergency-form-row">
+        <button type="button" class="btn btn-danger" data-action="emergency-reset-mvp">Reset MVP Voting</button>
+      </div>
+
+      <h3 style="margin-top: 1.6rem;">Ceremony Test Triggers</h3>
+      <p style="color: var(--ink-soft); font-size: 0.92rem; max-width: 60ch;">
+        Manually fire a ceremony animation on the Contest dashboard. For testing the look and timing of ceremonies — useful when training a new admin or rehearsing the wrap party reveal.
+      </p>
+      <div class="emergency-form-row" style="flex-wrap: wrap;">
+        <button type="button" class="btn btn-on-parchment" data-action="emergency-trigger-ceremony" data-ctype="idol_claimed">Test: Idol Claimed</button>
+        <button type="button" class="btn btn-on-parchment" data-action="emergency-trigger-ceremony" data-ctype="council_reveal">Test: Council Reveal</button>
+        <button type="button" class="btn btn-on-parchment" data-action="emergency-trigger-ceremony" data-ctype="tribe_merge">Test: Tribe Merge</button>
+        <button type="button" class="btn btn-danger" data-action="emergency-clear-ceremonies">Clear All Ceremonies</button>
+      </div>
+
+      <h3 style="margin-top: 1.6rem;">Reset Progress</h3>
+      <p style="color: var(--ink-soft); font-size: 0.92rem; max-width: 60ch;">
+        <strong style="color: var(--blood);">DESTRUCTIVE.</strong> Wipes all challenge results, eliminations, votes, locked competitors, and scores. Members and tribes are preserved. Use only to fully reset the contest after testing or to start a new run.
+      </p>
+      <div class="emergency-form-row">
+        <button type="button" class="btn btn-danger" data-action="emergency-reset-progress">Reset All Progress</button>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="ornament">✦ ✦ ✦</div>
+      Roy-Hart Middle School · Survivor Week · v0.2.2 (Phase 1.5 — Roster Manager)
+    </footer>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // No template scriptlets in this file — all data loaded via google.script.run.
+
+    let TRIBES_DATA = [];           // Array of {id, name, color_hex, ...}
+    let TRIBE_BY_ID = {};           // Lookup map
+    let SELECTED_TRIBE = null;
+
+    // HTML escape utility — used throughout for safe innerHTML composition
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // Tab navigation — show one pane, hide the others, highlight the active tab
+    function selectTab(tabName) {
+      const panes = document.querySelectorAll('.admin-pane');
+      panes.forEach(function(p) {
+        if (p.dataset.pane === tabName) p.classList.add('active');
+        else p.classList.remove('active');
+      });
+      const tabs = document.querySelectorAll('.admin-tab');
+      tabs.forEach(function(t) {
+        if (t.dataset.tab === tabName) t.classList.add('active');
+        else t.classList.remove('active');
+      });
+      try { sessionStorage.setItem('rhsv_admin_tab', tabName); } catch (e) {}
+      // Scroll to top of newly-active pane (small enhancement)
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Single delegated click listener for ALL [data-action] elements
+      document.addEventListener('click', handleClick);
+
+      // Form submit
+      const form = document.getElementById('addMemberForm');
+      if (form) form.addEventListener('submit', handleAddSubmit);
+
+      // Restore active tab from sessionStorage (or default to 'day')
+      let initialTab = 'day';
+      try {
+        const stored = sessionStorage.getItem('rhsv_admin_tab');
+        if (stored) initialTab = stored;
+      } catch (e) { /* fall back to default */ }
+      selectTab(initialTab);
+
+      // Load tribe data first, then everything else
+      google.script.run
+        .withSuccessHandler(onTribesLoaded)
+        .withFailureHandler(showFatal)
+        .getTribes();
+
+      // Load admin diagnostic info
+      google.script.run
+        .withSuccessHandler(renderAdminDiagnostic)
+        .getAdminEmails();
+    });
+
+    function onTribesLoaded(tribes) {
+      TRIBES_DATA = tribes || [];
+      TRIBE_BY_ID = {};
+      TRIBES_DATA.forEach(function(t) { TRIBE_BY_ID[t.id] = t; });
+
+      renderAddTribePicker();
+      renderDiagnosticTribes();
+      loadRoster();
+      populateEmergencySelects();
+
+      // Phase 4 initialization — load once. Refreshes happen only when
+      // the admin performs an action (save placements, open council, etc.)
+      // or clicks the manual Refresh button at the top.
+      loadDayControls();
+      loadEscapeRoom();
+      loadEscapeRoomMonitor();
+      loadIdolState();
+      buildMirrorTabs();
+      loadMirror();
+    }
+
+    function renderAddTribePicker() {
+      const picker = document.getElementById('addTribePicker');
+      picker.classList.remove('loading');
+      picker.innerHTML = '';
+      TRIBES_DATA.forEach(function(t) {
+        const tile = makeTribeTile(t, 'select-add-tribe', { tribeId: t.id });
+        picker.appendChild(tile);
+      });
+    }
+
+    function renderDiagnosticTribes() {
+      const el = document.getElementById('diagnosticTribes');
+      el.innerHTML = '';
+      TRIBES_DATA.forEach(function(t) {
+        const row = document.createElement('div');
+        row.className = 'tribe-flag';
+        row.style.margin = '0.3rem 0';
+        row.style.color = 'var(--parchment)';
+        const sw = document.createElement('span');
+        sw.className = 'swatch';
+        sw.style.background = t.color_hex;
+        const txt = document.createTextNode(' ' + t.name);
+        row.appendChild(sw);
+        row.appendChild(txt);
+        el.appendChild(row);
+      });
+    }
+
+    function renderAdminDiagnostic(emails) {
+      const el = document.getElementById('diagnosticAdmins');
+      el.innerHTML = '';
+      (emails || []).forEach(function(email) {
+        const p = document.createElement('p');
+        p.className = 'mono';
+        p.style.color = 'var(--ink-cream-soft)';
+        p.style.margin = '0.2rem 0';
+        p.style.fontSize = '0.85rem';
+        p.textContent = email;
+        el.appendChild(p);
+      });
+    }
+
+    // Build a tribe-tile DOM element with the right data-action and data attrs
+    function makeTribeTile(tribe, action, extraData) {
+      const tile = document.createElement('div');
+      tile.className = 'tribe-tile';
+      tile.dataset.action = action;
+      tile.dataset.tribeId = tribe.id;
+      if (extraData) {
+        Object.keys(extraData).forEach(function(k) {
+          if (k !== 'tribeId') tile.dataset[k] = extraData[k];
+        });
+      }
+      const sw = document.createElement('span');
+      sw.className = 'swatch';
+      sw.style.background = tribe.color_hex;
+      const lbl = document.createElement('span');
+      lbl.className = 'label';
+      lbl.textContent = tribe.name;
+      tile.appendChild(sw);
+      tile.appendChild(lbl);
+      return tile;
+    }
+
+    // ============================================================
+    // EVENT DELEGATION
+    // ============================================================
+    function handleClick(e) {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+
+      switch (action) {
+        case 'select-add-tribe':
+          selectAddTribe(target.dataset.tribeId);
+          break;
+        case 'clear-add-form':
+          clearAddForm();
+          break;
+        case 'wipe-roster':
+          confirmWipeRoster();
+          break;
+        case 'edit-member':
+          enterEditMode(target.dataset.memberId);
+          break;
+        case 'remove-member':
+          confirmRemove(target.dataset.memberId, target.dataset.memberName);
+          break;
+        case 'save-edit':
+          saveEdit(target.dataset.memberId);
+          break;
+        case 'cancel-edit':
+          loadRoster();
+          break;
+        case 'select-edit-tribe':
+          selectEditTribe(target.dataset.memberId, target.dataset.tribeId);
+          break;
+
+        // Phase 4 — Escape Room
+        case 'save-clue':
+          saveClue(parseInt(target.dataset.clueNumber, 10));
+          break;
+
+        // Phase 5 — Escape Room placements
+        case 'compute-er-placements':
+          confirmComputeErPlacements();
+          break;
+
+        // Phase 4 — Idol
+        case 'save-idol-secret':
+          saveIdolSecret(target.dataset.idolId);
+          break;
+        case 'add-idol-hint':
+          addIdolHintNow(target.dataset.idolId);
+          break;
+        case 'mark-idol-played':
+          confirmMarkIdolPlayed(target.dataset.idolId);
+          break;
+        case 'reset-idol':
+          confirmResetIdol(target.dataset.idolId);
+          break;
+
+        // Phase 4 — Mirror
+        case 'select-mirror-tab':
+          selectMirrorTab(target.dataset.tribeId);
+          break;
+
+        // Day Controls
+        case 'dc-refresh-all':
+          loadDayControls();
+          loadIdolState();
+          loadEscapeRoomMonitor();
+          loadMirror();
+          showToast('Refreshed', 'success');
+          break;
+        case 'dc-set-day':
+          dcSetDay(target.dataset.day);
+          break;
+        case 'dc-close-election':
+          dcCloseElection();
+          break;
+        case 'dc-save-placements':
+          dcSavePlacements();
+          break;
+        case 'dc-pick-loser':
+          dcPickLoser(target.dataset.tribeId);
+          break;
+        case 'dc-open-council':
+          dcOpenCouncil();
+          break;
+        case 'dc-close-council':
+          dcCloseCouncil();
+          break;
+        case 'dc-open-next-election':
+          dcOpenNextElection(target.dataset.day);
+          break;
+
+        // Friday-specific Day Controls (MVP voting)
+        case 'dc-open-mvp':
+          dcOpenMvp();
+          break;
+        case 'dc-reveal-mvp':
+          dcRevealMvp();
+          break;
+
+        // Tab navigation
+        case 'select-tab':
+          selectTab(target.dataset.tab);
+          break;
+
+        // Emergency tab actions
+        case 'emergency-dissolve':
+          emergencyDissolve();
+          break;
+        case 'emergency-eliminate':
+          emergencyEliminate();
+          break;
+        case 'emergency-reset-mvp':
+          emergencyResetMvp();
+          break;
+        case 'emergency-trigger-ceremony':
+          emergencyTriggerCeremony(target.dataset.ctype);
+          break;
+        case 'emergency-clear-ceremonies':
+          emergencyClearCeremonies();
+          break;
+        case 'emergency-reset-progress':
+          emergencyResetProgress();
+          break;
+      }
+    }
+
+    function handleAddSubmit(e) {
+      e.preventDefault();
+      submitNewMember();
+      return false;
+    }
+
+    // ============================================================
+    // ADD-MEMBER FLOW
+    // ============================================================
+    function selectAddTribe(tribeId) {
+      SELECTED_TRIBE = tribeId;
+      const t = TRIBE_BY_ID[tribeId];
+      document.querySelectorAll('#addTribePicker .tribe-tile').forEach(function(el) {
+        const isSel = el.dataset.tribeId === tribeId;
+        el.classList.toggle('selected', isSel);
+        el.style.borderColor = isSel && t ? t.color_hex : '';
+      });
+    }
+
+    function clearAddForm() {
+      document.getElementById('addName').value = '';
+      document.getElementById('addEmail').value = '';
+      SELECTED_TRIBE = null;
+      document.querySelectorAll('#addTribePicker .tribe-tile').forEach(function(el) {
+        el.classList.remove('selected');
+        el.style.borderColor = '';
+      });
+      setAddStatus('');
+    }
+
+    function submitNewMember() {
+      const name = document.getElementById('addName').value.trim();
+      const email = document.getElementById('addEmail').value.trim();
+      if (!name)            { setAddStatus('Name is required.', 'error'); return; }
+      if (!email)           { setAddStatus('Email is required.', 'error'); return; }
+      if (!SELECTED_TRIBE)  { setAddStatus('Pick a tribe.', 'error'); return; }
+
+      setAddStatus('Adding…');
+      const submitBtn = document.querySelector('#addMemberForm button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function(member) {
+          setAddStatus('Added ' + member.name + '.', 'success');
+          showToast('Castaway added', 'success');
+          clearAddForm();
+          if (submitBtn) submitBtn.disabled = false;
+          document.getElementById('addName').focus();
+          loadRoster();
+        })
+        .withFailureHandler(function(err) {
+          setAddStatus(err.message || 'Add failed.', 'error');
+          if (submitBtn) submitBtn.disabled = false;
+        })
+        .addMember(name, email, SELECTED_TRIBE);
+    }
+
+    function setAddStatus(msg, kind) {
+      const el = document.getElementById('addStatus');
+      el.textContent = msg;
+      el.className = 'field-status' + (kind ? (' ' + kind) : '');
+    }
+
+    // ============================================================
+    // ROSTER LIST
+    // ============================================================
+    function loadRoster() {
+      google.script.run
+        .withSuccessHandler(renderRoster)
+        .withFailureHandler(showError)
+        .listMembers();
+    }
+
+    function renderRoster(data) {
+      document.getElementById('totalCount').textContent  = data.totalCount;
+      document.getElementById('activeCount').textContent = data.activeCount;
+      document.getElementById('juryCount').textContent   = data.juryCount;
+
+      const list = document.getElementById('rosterList');
+      list.innerHTML = '';
+      data.tribes.forEach(function(tribe) {
+        const section = document.createElement('div');
+        section.className = 'tribe-section';
+        section.dataset.tribeId = tribe.id;
+
+        const header = document.createElement('div');
+        header.className = 'tribe-section-header';
+        header.style.background = tribe.color_hex;
+        header.style.color = needsDarkText(tribe.color_hex) ? '#1A1410' : '#F3F3EE';
+
+        const headerSwatch = document.createElement('span');
+        headerSwatch.className = 'swatch';
+        headerSwatch.style.background = tribe.color_hex;
+        const headerName = document.createElement('span');
+        headerName.textContent = tribe.name;
+        const headerCount = document.createElement('span');
+        headerCount.className = 'count';
+        headerCount.textContent = tribe.members.length + ' member' + (tribe.members.length === 1 ? '' : 's');
+        header.appendChild(headerSwatch);
+        header.appendChild(headerName);
+        header.appendChild(headerCount);
+        section.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'tribe-section-body' + (tribe.members.length === 0 ? ' empty' : '');
+        if (tribe.members.length === 0) {
+          body.textContent = 'No members yet.';
+        } else {
+          tribe.members.forEach(function(m) {
+            body.appendChild(buildRow(m));
+          });
+        }
+        section.appendChild(body);
+        list.appendChild(section);
+      });
+    }
+
+    function buildRow(member) {
+      const row = document.createElement('div');
+      row.className = 'roster-row';
+      row.dataset.memberId = member.id;
+      row.dataset.memberName = member.name;
+      row.dataset.memberEmail = member.email;
+      row.dataset.memberTribe = member.tribe_id;
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'name';
+      nameDiv.textContent = member.name;
+
+      const emailDiv = document.createElement('div');
+      emailDiv.className = 'email';
+      emailDiv.textContent = member.email;
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'icon-btn';
+      editBtn.textContent = 'Edit';
+      editBtn.dataset.action = 'edit-member';
+      editBtn.dataset.memberId = member.id;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'icon-btn danger';
+      removeBtn.textContent = 'Remove';
+      removeBtn.dataset.action = 'remove-member';
+      removeBtn.dataset.memberId = member.id;
+      removeBtn.dataset.memberName = member.name;
+
+      actions.appendChild(editBtn);
+      actions.appendChild(removeBtn);
+
+      row.appendChild(nameDiv);
+      row.appendChild(emailDiv);
+      row.appendChild(actions);
+      return row;
+    }
+
+    // ============================================================
+    // EDIT MODE
+    // ============================================================
+    function enterEditMode(memberId) {
+      const row = findRow(memberId);
+      if (!row) return;
+      const name  = row.dataset.memberName;
+      const email = row.dataset.memberEmail;
+      const currentTribeId = row.dataset.memberTribe;
+
+      row.classList.add('editing');
+      row.innerHTML = '';
+
+      const editRow = document.createElement('div');
+      editRow.className = 'edit-row';
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'edit-name';
+      nameInput.value = name;
+
+      const emailInput = document.createElement('input');
+      emailInput.type = 'email';
+      emailInput.className = 'edit-email';
+      emailInput.value = email;
+
+      const editActions = document.createElement('div');
+      editActions.className = 'actions';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'icon-btn';
+      saveBtn.textContent = 'Save';
+      saveBtn.dataset.action = 'save-edit';
+      saveBtn.dataset.memberId = memberId;
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'icon-btn';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.dataset.action = 'cancel-edit';
+
+      editActions.appendChild(saveBtn);
+      editActions.appendChild(cancelBtn);
+
+      editRow.appendChild(nameInput);
+      editRow.appendChild(emailInput);
+      editRow.appendChild(editActions);
+
+      const tribeRow = document.createElement('div');
+      tribeRow.className = 'edit-tribe-row';
+
+      const tribeLabel = document.createElement('label');
+      tribeLabel.style.display = 'block';
+      tribeLabel.style.fontFamily = 'var(--font-display)';
+      tribeLabel.style.fontSize = '0.7rem';
+      tribeLabel.style.letterSpacing = '0.14em';
+      tribeLabel.style.textTransform = 'uppercase';
+      tribeLabel.style.color = 'var(--ink-soft)';
+      tribeLabel.style.marginBottom = '0.4rem';
+      tribeLabel.style.marginTop = '0.4rem';
+      tribeLabel.textContent = 'Move to tribe:';
+
+      const tribePickerEl = document.createElement('div');
+      tribePickerEl.className = 'tribe-picker';
+      tribePickerEl.id = 'editTribePicker_' + memberId;
+
+      TRIBES_DATA.forEach(function(t) {
+        const tile = makeTribeTile(t, 'select-edit-tribe', { memberId: memberId });
+        if (t.id === currentTribeId) {
+          tile.classList.add('selected');
+          tile.style.borderColor = t.color_hex;
+        }
+        tribePickerEl.appendChild(tile);
+      });
+
+      tribeRow.appendChild(tribeLabel);
+      tribeRow.appendChild(tribePickerEl);
+
+      row.appendChild(editRow);
+      row.appendChild(tribeRow);
+
+      nameInput.focus();
+    }
+
+    function selectEditTribe(memberId, tribeId) {
+      const picker = document.getElementById('editTribePicker_' + memberId);
+      if (!picker) return;
+      const t = TRIBE_BY_ID[tribeId];
+      picker.querySelectorAll('.tribe-tile').forEach(function(el) {
+        const isSel = el.dataset.tribeId === tribeId;
+        el.classList.toggle('selected', isSel);
+        el.style.borderColor = isSel && t ? t.color_hex : '';
+      });
+    }
+
+    function saveEdit(memberId) {
+      const row = findRow(memberId);
+      if (!row) return;
+      const newName = row.querySelector('.edit-name').value.trim();
+      const newEmail = row.querySelector('.edit-email').value.trim();
+      const selTile = row.querySelector('#editTribePicker_' + memberId + ' .tribe-tile.selected');
+      const newTribeId = selTile ? selTile.dataset.tribeId : null;
+
+      if (!newName)    { showToast('Name required', 'error'); return; }
+      if (!newEmail)   { showToast('Email required', 'error'); return; }
+      if (!newTribeId) { showToast('Pick a tribe', 'error'); return; }
+
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Saved', 'success');
+          loadRoster();
+        })
+        .withFailureHandler(function(err) {
+          showToast(err.message || 'Save failed', 'error');
+        })
+        .updateMember(memberId, newName, newEmail, newTribeId);
+    }
+
+    // Find a row by member id (handles ids that contain non-CSS-safe chars)
+    function findRow(memberId) {
+      const rows = document.querySelectorAll('.roster-row');
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].dataset.memberId === memberId) return rows[i];
+      }
+      return null;
+    }
+
+    // ============================================================
+    // REMOVE & WIPE
+    // ============================================================
+    function confirmRemove(memberId, memberName) {
+      if (!confirm('Remove ' + memberName + ' from the roster?\n\nThis cannot be undone (but you can re-add them).')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Removed', 'success');
+          loadRoster();
+        })
+        .withFailureHandler(function(err) {
+          showToast(err.message || 'Remove failed', 'error');
+        })
+        .removeMember(memberId);
+    }
+
+    function confirmWipeRoster() {
+      const total = parseInt(document.getElementById('totalCount').textContent, 10) || 0;
+      if (total === 0) { showToast('Roster is already empty', 'success'); return; }
+      const msg = 'Wipe ALL ' + total + ' members from the roster?\n\nThis is meant for clearing test data before entering the real roster. This cannot be undone.';
+      if (!confirm(msg)) return;
+      if (!confirm('Are you absolutely sure?')) return;
+
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Roster wiped', 'success');
+          loadRoster();
+        })
+        .withFailureHandler(function(err) {
+          showToast(err.message || 'Wipe failed', 'error');
+        })
+        .wipeRoster();
+    }
+
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+    // =====================================================================
+    // PHASE 4 — ESCAPE ROOM EDITOR
+    // =====================================================================
+    function loadEscapeRoom() {
+      google.script.run
+        .withSuccessHandler(renderEscapeRoom)
+        .withFailureHandler(function(err) {
+          document.getElementById('escapeRoomEditor').innerHTML =
+            '<div class="empty-state" style="color:var(--blood);">Failed to load: ' + escapeHtml(err.message || err) + '</div>';
+        })
+        .getEscapeRoomCluesAdmin();
+    }
+
+    function renderEscapeRoom(clues) {
+      const wrap = document.getElementById('escapeRoomEditor');
+      wrap.innerHTML = '';
+      if (!clues || clues.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No clues found. Run setupSheets() to seed.</div>';
+        return;
+      }
+      clues.forEach(function(clue) {
+        wrap.appendChild(buildClueCard(clue));
+      });
+    }
+
+    function buildClueCard(clue) {
+      const card = document.createElement('div');
+      card.className = 'clue-card';
+      card.dataset.clueNumber = clue.clue_number;
+
+      const hdr = document.createElement('div');
+      hdr.className = 'clue-card-header';
+      const badge = document.createElement('span');
+      badge.className = 'clue-number-badge';
+      badge.textContent = 'Clue ' + clue.clue_number;
+      const titleInput = document.createElement('input');
+      titleInput.type = 'text';
+      titleInput.className = 'clue-card-title-input';
+      titleInput.dataset.field = 'title';
+      titleInput.value = clue.title || '';
+      titleInput.placeholder = 'Clue title';
+      hdr.appendChild(badge);
+      hdr.appendChild(titleInput);
+      card.appendChild(hdr);
+
+      const fields = document.createElement('div');
+      fields.className = 'clue-fields';
+
+      // Release time — datetime-local picker
+      const dtField = document.createElement('div');
+      dtField.className = 'clue-field';
+      const dtLbl = document.createElement('label');
+      dtLbl.textContent = 'Release Date & Time';
+      const dtInput = document.createElement('input');
+      dtInput.type = 'datetime-local';
+      dtInput.dataset.field = 'release_time';
+      dtInput.dataset.dateField = '1';
+      // Convert ISO to datetime-local format (YYYY-MM-DDTHH:MM)
+      dtInput.value = isoToLocalDatetime(clue.release_time);
+      dtField.appendChild(dtLbl);
+      dtField.appendChild(dtInput);
+      fields.appendChild(dtField);
+
+      // Cipher answer
+      fields.appendChild(buildField(
+        'Cipher Answer',
+        'cipher_answer',
+        clue.cipher_answer || '',
+        false,
+        'SUMMER'
+      ));
+
+      // Image URL — full-width with preview
+      const imgFieldWrap = document.createElement('div');
+      imgFieldWrap.className = 'clue-field full';
+      const imgLbl = document.createElement('label');
+      imgLbl.textContent = 'Image URL (optional)';
+      const imgInput = document.createElement('input');
+      imgInput.type = 'text';
+      imgInput.dataset.field = 'image_url';
+      imgInput.value = clue.image_url || '';
+      imgInput.placeholder = 'https://... (paste a public URL — see help below)';
+      imgInput.dataset.imagePreviewClue = clue.clue_number;
+      imgFieldWrap.appendChild(imgLbl);
+      imgFieldWrap.appendChild(imgInput);
+
+      // Help text
+      const help = document.createElement('div');
+      help.className = 'clue-image-help';
+      help.innerHTML = '💡 To use a Drive image: open in Drive → <strong>Share</strong> → set to <strong>"Anyone with the link"</strong> → copy the link. Or paste any public image URL.';
+      imgFieldWrap.appendChild(help);
+
+      // Image preview
+      const previewWrap = document.createElement('div');
+      previewWrap.className = 'clue-image-preview';
+      previewWrap.id = 'cluePreview_' + clue.clue_number;
+      if (clue.image_url) {
+        const img = document.createElement('img');
+        img.src = clue.image_url;
+        img.alt = 'Clue image preview';
+        img.onerror = function() {
+          previewWrap.innerHTML = '<div class="clue-image-error">⚠ Image failed to load. Check the URL or sharing permissions.</div>';
+        };
+        previewWrap.appendChild(img);
+      } else {
+        previewWrap.innerHTML = '<div class="clue-image-empty">No image set</div>';
+      }
+      imgFieldWrap.appendChild(previewWrap);
+
+      // Wire input change to update preview
+      imgInput.addEventListener('input', function() {
+        updateCluePreview(clue.clue_number, imgInput.value);
+      });
+
+      fields.appendChild(imgFieldWrap);
+
+      // Riddle text
+      const riddleField = buildField(
+        'Riddle Text (what players see)',
+        'riddle_text',
+        clue.riddle_text || '',
+        true,
+        'The riddle players see…'
+      );
+      riddleField.classList.add('full');
+      fields.appendChild(riddleField);
+
+      card.appendChild(fields);
+
+      const actions = document.createElement('div');
+      actions.className = 'clue-card-actions';
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'btn btn-primary';
+      saveBtn.dataset.action = 'save-clue';
+      saveBtn.dataset.clueNumber = clue.clue_number;
+      saveBtn.textContent = 'Save Clue';
+      const status = document.createElement('span');
+      status.className = 'clue-status';
+      status.id = 'clueStatus_' + clue.clue_number;
+      actions.appendChild(saveBtn);
+      actions.appendChild(status);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    // Convert an ISO timestamp to the YYYY-MM-DDTHH:MM format that datetime-local needs.
+    function isoToLocalDatetime(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        const pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+               'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      } catch (e) { return ''; }
+    }
+
+    // Convert YYYY-MM-DDTHH:MM (no timezone) to a full ISO string assuming local time.
+    function localDatetimeToIso(local) {
+      if (!local) return '';
+      try {
+        const d = new Date(local); // browser parses as local time
+        if (isNaN(d.getTime())) return local; // fallback: pass through
+        return d.toISOString();
+      } catch (e) { return local; }
+    }
+
+    function updateCluePreview(clueNumber, url) {
+      const wrap = document.getElementById('cluePreview_' + clueNumber);
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      if (!url || !url.trim()) {
+        wrap.innerHTML = '<div class="clue-image-empty">No image set</div>';
+        return;
+      }
+      const img = document.createElement('img');
+      img.src = url.trim();
+      img.alt = 'Clue image preview';
+      img.onerror = function() {
+        wrap.innerHTML = '<div class="clue-image-error">⚠ Image failed to load. Check the URL or sharing permissions.</div>';
+      };
+      wrap.appendChild(img);
+    }
+
+    function buildField(labelText, fieldName, value, isTextarea, placeholder) {
+      const wrap = document.createElement('div');
+      wrap.className = 'clue-field';
+      const lbl = document.createElement('label');
+      lbl.textContent = labelText;
+      const input = isTextarea ? document.createElement('textarea') : document.createElement('input');
+      input.dataset.field = fieldName;
+      input.value = value;
+      if (placeholder) input.placeholder = placeholder;
+      wrap.appendChild(lbl);
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    function saveClue(clueNumber) {
+      const card = document.querySelector('.clue-card[data-clue-number="' + clueNumber + '"]');
+      if (!card) return;
+      const fields = {};
+      card.querySelectorAll('[data-field]').forEach(function(el) {
+        let value = el.value;
+        // Convert datetime-local back to full ISO
+        if (el.dataset.dateField === '1' && value) {
+          value = localDatetimeToIso(value);
+        }
+        fields[el.dataset.field] = value;
+      });
+      const status = document.getElementById('clueStatus_' + clueNumber);
+      status.textContent = 'Saving…';
+      status.className = 'clue-status';
+      google.script.run
+        .withSuccessHandler(function() {
+          status.textContent = 'Saved.';
+          status.className = 'clue-status success';
+          showToast('Clue ' + clueNumber + ' saved', 'success');
+          setTimeout(function() { status.textContent = ''; }, 3000);
+        })
+        .withFailureHandler(function(err) {
+          status.textContent = err.message || 'Save failed';
+          status.className = 'clue-status error';
+        })
+        .updateClue(clueNumber, fields);
+    }
+
+    // =====================================================================
+    // DAY CONTROLS — vertical checklist that walks you through the day
+    // =====================================================================
+    //
+    // Five rows, each a step in the daily rhythm:
+    //   1. Set today (current day picker — only used at start of week or to override)
+    //   2. Close election + lock competitors          (8 AM)
+    //   3. Run challenge → enter today's placements   (during the day)
+    //   4. Open Tribal Council for losing tribe       (2 PM)
+    //   5. Close council + eliminate                  (6 PM)
+    //   6. Open next day's election                   (6 PM)
+    //
+    // Each row shows: status (done / active / pending), label, detail, action button.
+    // Tribe selection (when needed) uses styled tribe-pill buttons rather than
+    // a native <select> so the picker is always visible and on-theme.
+
+    let DAY_CONTROLS_STATE = null;
+    let DC_CHOSEN_LOSER = null; // local UI state for picking a losing tribe
+
+    function loadDayControls() {
+      google.script.run
+        .withSuccessHandler(function(state) {
+          renderDayControls(state);
+        })
+        .withFailureHandler(function(err) {
+          const wrap = document.getElementById('dayControlsPanel');
+          if (wrap) {
+            wrap.innerHTML = '<div style="padding:1rem; background:rgba(200,51,43,0.1); border:1px solid var(--blood); color:var(--blood);">' +
+              '<strong>Day Controls failed to load.</strong><br>' +
+              'Error: ' + escapeHtml(err && err.message ? err.message : String(err)) +
+              '<br><br>If this persists, check that you redeployed with <strong>Deploy → New version</strong> (not edit-existing).' +
+              '</div>';
+          }
+        })
+        .getDayControlsState();
+    }
+
+    function renderDayControls(state) {
+      DAY_CONTROLS_STATE = state;
+      const wrap = document.getElementById('dayControlsPanel');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+
+      try {
+        // Defensive — make sure state has the maps we expect
+        if (!state || typeof state !== 'object') throw new Error('Empty state from server');
+        if (!state.dayLabels) state.dayLabels = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday' };
+        if (!state.challengeLabels) state.challengeLabels = { mon: 'Cornhole', tue: 'Foosball', wed: 'Puzzle', thu: 'Escape Room', fri: 'Obstacle Course' };
+
+        // Top status banner — current day at a glance
+        wrap.appendChild(buildDcStatusBanner(state));
+
+        // The checklist
+        const list = document.createElement('div');
+        list.className = 'dc-checklist';
+
+        // Row 0 — Set Current Day (always present, lets you switch days mid-week)
+        list.appendChild(buildDcDayRow(state));
+
+        // Row 1 — Close Election + Lock Competitors
+        list.appendChild(buildDcCloseElectionRow(state));
+
+        // Row 2 — Enter Placements (inline editor)
+        list.appendChild(buildDcPlacementsRow(state));
+
+        // Friday is special: no council, but MVP voting + reveal instead.
+        if (state.currentDay === 'fri') {
+          // Row 3 — Open MVP Voting
+          list.appendChild(buildDcOpenMvpRow(state));
+          // Row 4 — Close MVP + Reveal Winner
+          list.appendChild(buildDcRevealMvpRow(state));
+        } else {
+          // Row 3 — Open Tribal Council
+          list.appendChild(buildDcOpenCouncilRow(state));
+          // Row 4 — Close Council + Eliminate
+          list.appendChild(buildDcCloseCouncilRow(state));
+        }
+
+        // Row 5 — Open Next Day's Election (disabled Friday — no next day)
+        list.appendChild(buildDcOpenNextRow(state));
+
+        wrap.appendChild(list);
+      } catch (err) {
+        // Surface any render error visibly so we can diagnose
+        const errBox = document.createElement('div');
+        errBox.style.cssText = 'padding:1rem; background:rgba(200,51,43,0.1); border:1px solid var(--blood); color:var(--blood); font-family:monospace; font-size:0.88rem;';
+        errBox.textContent = 'Day Controls render error: ' + (err && err.message ? err.message : String(err)) +
+          (err && err.stack ? '\n\n' + err.stack : '');
+        errBox.style.whiteSpace = 'pre-wrap';
+        wrap.appendChild(errBox);
+        // Also log to console
+        if (typeof console !== 'undefined' && console.error) console.error('Day Controls render error:', err);
+      }
+    }
+
+    function buildDcStatusBanner(state) {
+      const banner = document.createElement('div');
+      banner.className = 'dc-status-banner';
+      const dayLabel = state.dayLabels[state.currentDay] || 'Pre-contest';
+      const challengeLabel = state.challengeLabels[state.currentDay] || '—';
+
+      let html = '<div class="dc-status-day">';
+      html += '<span class="dc-status-eyebrow">Today</span>';
+      html += '<strong>' + escapeHtml(dayLabel) + '</strong>';
+      if (state.currentDay) {
+        html += '<span class="dc-status-challenge">' + escapeHtml(challengeLabel) + '</span>';
+      }
+      html += '</div>';
+
+      const pills = [];
+      if (state.electionOpenForDay) {
+        pills.push('<span class="dc-status-pill open">Election OPEN · ' + escapeHtml(state.dayLabels[state.electionOpenForDay] || state.electionOpenForDay) + '</span>');
+      }
+      if (state.councilOpenForDay) {
+        const t = TRIBE_BY_ID[state.councilOpenForTribe];
+        pills.push('<span class="dc-status-pill open council">Council OPEN · ' + escapeHtml(t ? t.name : state.councilOpenForTribe) + '</span>');
+      }
+      if (pills.length === 0) {
+        pills.push('<span class="dc-status-pill idle">No active windows</span>');
+      }
+      html += '<div class="dc-status-pills">' + pills.join('') + '</div>';
+      banner.innerHTML = html;
+      return banner;
+    }
+
+    // Build one checklist row. Caller provides config object.
+    function buildDcRow(config) {
+      const row = document.createElement('div');
+      row.className = 'dc-row dc-row-' + config.status; // done / active / pending / disabled
+
+      // Status indicator (left)
+      const status = document.createElement('div');
+      status.className = 'dc-row-status';
+      status.innerHTML = config.status === 'done' ? '✓'
+        : config.status === 'active' ? '●'
+        : config.status === 'disabled' ? '—' : '○';
+      row.appendChild(status);
+
+      // Body (middle)
+      const body = document.createElement('div');
+      body.className = 'dc-row-body';
+      let bodyHtml = '<div class="dc-row-step">' + escapeHtml(config.step || '') + '</div>';
+      bodyHtml += '<div class="dc-row-title">' + (config.title || '') + '</div>';
+      if (config.detail) {
+        bodyHtml += '<div class="dc-row-detail">' + (config.detail) + '</div>';
+      }
+      body.innerHTML = bodyHtml;
+
+      // Inline content — picker, placements, etc.
+      if (config.inlineEl) body.appendChild(config.inlineEl);
+      row.appendChild(body);
+
+      // Action area (right)
+      const actions = document.createElement('div');
+      actions.className = 'dc-row-actions';
+      if (config.button) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-primary' + (config.status === 'active' ? '' : ' btn-faded');
+        btn.textContent = config.button.label;
+        btn.dataset.action = config.button.action;
+        Object.keys(config.button.data || {}).forEach(function(k) {
+          btn.dataset[k] = config.button.data[k];
+        });
+        if (config.status === 'disabled' || config.button.disabled) btn.disabled = true;
+        actions.appendChild(btn);
+      }
+      if (config.secondaryButton) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-on-parchment dc-secondary-btn';
+        btn.textContent = config.secondaryButton.label;
+        btn.dataset.action = config.secondaryButton.action;
+        actions.appendChild(btn);
+      }
+      row.appendChild(actions);
+
+      return row;
+    }
+
+    function buildDcDayRow(state) {
+      const picker = document.createElement('div');
+      picker.className = 'dc-day-picker';
+      ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(function(d) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'dc-day-pill' + (state.currentDay === d ? ' active' : '');
+        btn.dataset.action = 'dc-set-day';
+        btn.dataset.day = d;
+        btn.innerHTML = '<strong>' + state.dayLabels[d].slice(0, 3) + '</strong>' +
+                        '<span>' + state.challengeLabels[d] + '</span>';
+        picker.appendChild(btn);
+      });
+
+      return buildDcRow({
+        status: state.currentDay ? 'done' : 'active',
+        step: 'Step 0',
+        title: 'Set today',
+        detail: state.currentDay
+          ? 'Currently set to <strong>' + escapeHtml(state.dayLabels[state.currentDay]) + '</strong>. Click another day to override.'
+          : 'Pick which day of the contest it is. This drives the rest of the panel.',
+        inlineEl: picker
+      });
+    }
+
+    function buildDcCloseElectionRow(state) {
+      const isOpen = state.electionOpenForDay === state.currentDay;
+      const lockedCount = Object.keys(state.lockedCompetitorsByTribe || {}).length;
+      const isDone = !isOpen && lockedCount > 0;
+
+      let detail;
+      if (isDone) {
+        detail = 'Competitors locked for ' + lockedCount + ' tribes.';
+      } else if (isOpen) {
+        detail = 'Election is currently open for <strong>' + escapeHtml(state.dayLabels[state.electionOpenForDay]) + '</strong>. Tally votes and lock competitors.';
+      } else if (state.currentDay && !state.electionOpenForDay) {
+        detail = 'No election currently open for today. (If voting was opened last night, you should see the OPEN status above.)';
+      } else {
+        detail = 'Pick today first.';
+      }
+
+      return buildDcRow({
+        status: isDone ? 'done' : (isOpen ? 'active' : 'disabled'),
+        step: 'Step 1 · 8 AM',
+        title: 'Close election + lock competitors',
+        detail: detail,
+        button: isOpen ? {
+          label: 'Close + Lock',
+          action: 'dc-close-election'
+        } : null
+      });
+    }
+
+    function buildDcPlacementsRow(state) {
+      const expectedCount = TRIBES_DATA.length;
+      const enteredCount = state.placementCount || 0;
+      const isDone = enteredCount >= expectedCount;
+      const isActive = state.currentDay && !isDone;
+
+      // Build the inline placements editor (only if today is set)
+      let inlineEl = null;
+      if (state.currentDay) {
+        inlineEl = document.createElement('div');
+        inlineEl.className = 'dc-placements-grid';
+        TRIBES_DATA.forEach(function(t) {
+          const wrap = document.createElement('div');
+          wrap.className = 'dc-placement-row';
+          const dot = document.createElement('span');
+          dot.className = 'dc-tribe-dot';
+          dot.style.background = t.color_hex;
+          const label = document.createElement('span');
+          label.className = 'dc-tribe-label';
+          label.textContent = t.name;
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = '1';
+          input.max = '6';
+          input.className = 'dc-placement-input';
+          input.dataset.tribeId = t.id;
+          if (state.todaysPlacements && state.todaysPlacements[t.id]) {
+            input.value = state.todaysPlacements[t.id];
+          }
+          input.placeholder = '–';
+          wrap.appendChild(dot);
+          wrap.appendChild(label);
+          wrap.appendChild(input);
+          inlineEl.appendChild(wrap);
+        });
+      }
+
+      return buildDcRow({
+        status: isDone ? 'done' : (isActive ? 'active' : 'disabled'),
+        step: 'Step 2 · After challenge',
+        title: 'Enter today\'s placements',
+        detail: isDone
+          ? 'Placements saved for all ' + expectedCount + ' tribes. Loser is auto-detected for council below.'
+          : (isActive
+            ? 'Type 1–6 next to each tribe based on how they finished today\'s challenge. The 6th-place tribe goes to Tribal Council.'
+            : 'Pick today first.'),
+        inlineEl: inlineEl,
+        button: isActive ? {
+          label: enteredCount > 0 ? 'Update Placements' : 'Save Placements',
+          action: 'dc-save-placements'
+        } : null
+      });
+    }
+
+    function buildDcOpenCouncilRow(state) {
+      const isDone = !!state.councilOpenForDay;
+      const hasPlacements = (state.placementCount || 0) >= TRIBES_DATA.length;
+      const suggested = TRIBE_BY_ID[state.suggestedLoserTribeId];
+      const isActive = state.currentDay && state.currentDay !== 'fri' && !isDone;
+
+      // Inline tribe picker — pills, always visible
+      let inlineEl = null;
+      if (isActive) {
+        inlineEl = document.createElement('div');
+        inlineEl.className = 'dc-tribe-picker';
+        if (suggested) {
+          const note = document.createElement('div');
+          note.className = 'dc-tribe-suggested';
+          note.innerHTML = 'Suggested: <span class="dc-tribe-suggested-name" style="color:' + suggested.color_hex + '">' +
+                           escapeHtml(suggested.name) + '</span> (placed 6th today)';
+          inlineEl.appendChild(note);
+        } else if (!hasPlacements) {
+          const note = document.createElement('div');
+          note.className = 'dc-tribe-suggested faint';
+          note.textContent = 'Enter placements first to auto-suggest the losing tribe — or pick manually below.';
+          inlineEl.appendChild(note);
+        }
+
+        const pills = document.createElement('div');
+        pills.className = 'dc-tribe-pills';
+        TRIBES_DATA.forEach(function(t) {
+          const pill = document.createElement('button');
+          pill.type = 'button';
+          pill.className = 'dc-tribe-pill';
+          if (DC_CHOSEN_LOSER === t.id) pill.classList.add('selected');
+          else if (!DC_CHOSEN_LOSER && suggested && suggested.id === t.id) pill.classList.add('selected');
+          pill.dataset.action = 'dc-pick-loser';
+          pill.dataset.tribeId = t.id;
+          pill.style.setProperty('--pill-color', t.color_hex);
+          const dot = document.createElement('span');
+          dot.className = 'dc-pill-dot';
+          dot.style.background = t.color_hex;
+          pill.appendChild(dot);
+          pill.appendChild(document.createTextNode(t.name));
+          pills.appendChild(pill);
+        });
+        inlineEl.appendChild(pills);
+      } else if (isDone) {
+        const t = TRIBE_BY_ID[state.councilOpenForTribe];
+        inlineEl = document.createElement('div');
+        inlineEl.className = 'dc-tribe-suggested';
+        inlineEl.innerHTML = 'Council is open for <strong style="color:' + (t ? t.color_hex : '#888') +
+                             '">' + escapeHtml(t ? t.name : state.councilOpenForTribe) + '</strong>. ' +
+                             'They\'re voting now.';
+      }
+
+      return buildDcRow({
+        status: isDone ? 'done' : (isActive ? 'active' : 'disabled'),
+        step: 'Step 3 · 2 PM',
+        title: 'Open Tribal Council',
+        detail: state.currentDay === 'fri'
+          ? 'No council on Friday — Friday is the finale.'
+          : (isDone
+            ? 'Council window is open. Tribe is voting until 6 PM.'
+            : 'Click a tribe pill below to choose, then open council. They\'ll cast votes until 6 PM.'),
+        inlineEl: inlineEl,
+        button: isActive ? {
+          label: 'Open Council',
+          action: 'dc-open-council'
+        } : null
+      });
+    }
+
+    function buildDcCloseCouncilRow(state) {
+      const isOpen = !!state.councilOpenForDay;
+      const t = TRIBE_BY_ID[state.councilOpenForTribe];
+
+      return buildDcRow({
+        status: isOpen ? 'active' : 'disabled',
+        step: 'Step 4 · 6 PM',
+        title: 'Close council + eliminate',
+        detail: isOpen && t
+          ? 'Tally votes for <strong style="color:' + t.color_hex + '">' + escapeHtml(t.name) +
+            '</strong>. Top-2 vote-getters move to Jury. Ceremony plays on the dashboard.'
+          : 'No council currently open.',
+        button: isOpen ? {
+          label: 'Close + Eliminate',
+          action: 'dc-close-council'
+        } : null
+      });
+    }
+
+    // Friday-specific: Open MVP Voting (replaces Step 3 on Friday)
+    function buildDcOpenMvpRow(state) {
+      const mvp = state.mvpState || 'pending';
+      const isDone = mvp === 'open' || mvp === 'revealed';
+      const isActive = mvp === 'pending';
+
+      return buildDcRow({
+        status: isDone ? 'done' : 'active',
+        step: 'Step 3 · After Obstacle Course',
+        title: 'Open MVP voting',
+        detail: mvp === 'open'
+          ? '🟢 MVP voting is OPEN. The Jury can now cast their final vote on the Jury dashboard. Wait until your reveal moment, then close + reveal below.'
+          : mvp === 'revealed'
+            ? 'MVP voting closed and winner revealed.'
+            : 'After the obstacle course wraps, open MVP voting so the Jury can cast their final vote for Ultimate Roy-Hart Survivor.',
+        button: isActive ? {
+          label: 'Open MVP Voting',
+          action: 'dc-open-mvp'
+        } : null
+      });
+    }
+
+    // Friday-specific: Reveal MVP Winner (replaces Step 4 on Friday)
+    function buildDcRevealMvpRow(state) {
+      const mvp = state.mvpState || 'pending';
+      const isDone = mvp === 'revealed';
+      const isActive = mvp === 'open';
+
+      return buildDcRow({
+        status: isDone ? 'done' : (isActive ? 'active' : 'disabled'),
+        step: 'Step 4 · The Reveal',
+        title: 'Close + reveal the winner',
+        detail: isDone
+          ? '🏆 Winner revealed. Survivor Week complete.'
+          : isActive
+            ? 'Close MVP voting and reveal the winner. The reveal animation plays on the Jury dashboard. <strong>Make sure everyone is gathered and watching the screen first.</strong>'
+            : 'Open MVP voting first.',
+        button: isActive ? {
+          label: 'Close + Reveal Winner',
+          action: 'dc-reveal-mvp'
+        } : null
+      });
+    }
+
+    function buildDcOpenNextRow(state) {
+      // Determine "next day" for THIS context. If election is already open
+      // for any future day, treat that as "done."
+      const electionForFuture = state.electionOpenForDay && state.electionOpenForDay !== state.currentDay;
+      const nextDay = state.nextDay;
+      const isDone = electionForFuture && state.electionOpenForDay === nextDay;
+      const isActive = !!nextDay && !isDone;
+
+      let detail;
+      if (state.currentDay === 'fri') {
+        detail = 'Friday is the final day — no next election.';
+      } else if (isDone) {
+        detail = 'Election open for <strong>' + escapeHtml(state.dayLabels[state.electionOpenForDay]) + '</strong>.';
+      } else if (isActive) {
+        detail = 'Open voting for <strong>' + escapeHtml(state.dayLabels[nextDay]) + '</strong> (' +
+                 escapeHtml(state.challengeLabels[nextDay]) + '). Tribes will vote overnight.';
+      } else {
+        detail = 'No next day available.';
+      }
+
+      return buildDcRow({
+        status: isDone ? 'done' : (isActive ? 'active' : 'disabled'),
+        step: 'Step 5 · 6 PM',
+        title: 'Open next day\'s election',
+        detail: detail,
+        button: isActive ? {
+          label: 'Open ' + (state.dayLabels[nextDay] || '') + ' Election',
+          action: 'dc-open-next-election',
+          data: { day: nextDay }
+        } : null
+      });
+    }
+
+    // =====================================================================
+    // DAY CONTROLS — actions
+    // =====================================================================
+    function dcSetDay(day) {
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Day set to ' + day.toUpperCase(), 'success');
+          DC_CHOSEN_LOSER = null; // reset selection when day changes
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setSimDay(day);
+    }
+
+    function dcCloseElection() {
+      const day = DAY_CONTROLS_STATE && DAY_CONTROLS_STATE.electionOpenForDay;
+      if (!day) { showToast('No election currently open', 'error'); return; }
+      if (!confirm('Close the election for ' + day.toUpperCase() + ' and lock the top-2 vote-getters per tribe as today\'s competitors?')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          showToast('Competitors locked · ' + (res.tribesPicked || []).length + ' tribes', 'success');
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .closeElectionAndLock(day);
+    }
+
+    function dcSavePlacements() {
+      const day = DAY_CONTROLS_STATE && DAY_CONTROLS_STATE.currentDay;
+      if (!day) { showToast('Pick today first', 'error'); return; }
+      const inputs = document.querySelectorAll('.dc-placement-input');
+      const placements = [];
+      const seen = {};
+      let hasError = false;
+      inputs.forEach(function(input) {
+        const v = (input.value || '').trim();
+        if (!v) return;
+        const n = parseInt(v, 10);
+        if (isNaN(n) || n < 1 || n > 6) {
+          showToast('Placements must be numbers 1–6', 'error');
+          hasError = true; return;
+        }
+        if (seen[n]) {
+          showToast('Two tribes have placement ' + n + '. Each placement should be unique.', 'error');
+          hasError = true; return;
+        }
+        seen[n] = true;
+        placements.push({ tribe_id: input.dataset.tribeId, placement: n });
+      });
+      if (hasError) return;
+      if (placements.length === 0) { showToast('Enter at least one placement', 'error'); return; }
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Placements saved · ' + placements.length + ' tribes', 'success');
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setChallengeResults(day, placements);
+    }
+
+    function dcPickLoser(tribeId) {
+      DC_CHOSEN_LOSER = tribeId;
+      // re-render to show the selection (without re-fetching state)
+      if (DAY_CONTROLS_STATE) renderDayControls(DAY_CONTROLS_STATE);
+    }
+
+    function dcOpenCouncil() {
+      const state = DAY_CONTROLS_STATE;
+      if (!state || !state.currentDay) { showToast('Pick today first', 'error'); return; }
+      const tribeId = DC_CHOSEN_LOSER || state.suggestedLoserTribeId;
+      if (!tribeId) { showToast('Pick a tribe first', 'error'); return; }
+      const tribe = TRIBE_BY_ID[tribeId];
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Council open · ' + (tribe ? tribe.name : tribeId), 'success');
+          DC_CHOSEN_LOSER = null;
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setCouncilWindow(state.currentDay, tribeId);
+    }
+
+    function dcCloseCouncil() {
+      const day = DAY_CONTROLS_STATE && DAY_CONTROLS_STATE.councilOpenForDay;
+      const tribeId = DAY_CONTROLS_STATE && DAY_CONTROLS_STATE.councilOpenForTribe;
+      if (!day || !tribeId) { showToast('No council currently open', 'error'); return; }
+      const tribe = TRIBE_BY_ID[tribeId];
+      if (!confirm('Close council for ' + (tribe ? tribe.name : tribeId) + ' on ' + day.toUpperCase() + ' and eliminate the top-2 vote-getters?\n\nThe ceremony will play on the Contest dashboard.')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          const names = (res.eliminated || []).map(function(m) { return m.name; }).join(', ');
+          showToast('To Jury: ' + names, 'success');
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .closeCouncilAndEliminate(day, tribeId);
+    }
+
+    function dcOpenNextElection(nextDay) {
+      if (!nextDay) { showToast('No next day', 'error'); return; }
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Election open for ' + nextDay.toUpperCase(), 'success');
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setElectionWindow(nextDay);
+    }
+
+    // Friday-specific Day Controls (MVP voting)
+    function dcOpenMvp() {
+      if (!confirm('Open MVP voting for the Jury?\n\nAll jury members will be able to cast their final vote for Ultimate Roy-Hart Survivor.')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('MVP voting OPEN', 'success');
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setMvpVotingOpen(true);
+    }
+
+    function dcRevealMvp() {
+      if (!confirm('Close MVP voting and reveal the winner?\n\nThis is the final reveal. The winner animation plays on the Jury dashboard. Make sure everyone is watching first.')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          const name = (res && res.winnerName) ? res.winnerName : 'Winner';
+          showToast('🏆 ' + name + ' is the Ultimate Survivor', 'success');
+          loadDayControls();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .closeMvpVotingAndReveal();
+    }
+
+    // ============================================================
+    // EMERGENCY TAB — destructive / unusual operations
+    // ============================================================
+    function populateEmergencySelects() {
+      // Both dissolve and elim selects pull from TRIBES_DATA
+      const sel1 = document.getElementById('emergencyDissolveSelect');
+      const sel2 = document.getElementById('emergencyElimTribeSelect');
+      if (sel1 && sel1.options.length <= 1) {
+        TRIBES_DATA.forEach(function(t) {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = t.name;
+          sel1.appendChild(opt);
+        });
+      }
+      if (sel2 && sel2.options.length <= 1) {
+        TRIBES_DATA.forEach(function(t) {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = t.name;
+          sel2.appendChild(opt);
+        });
+        // Wire up change handler to load members for selected tribe
+        sel2.addEventListener('change', function() {
+          loadEmergencyElimMembers(sel2.value);
+        });
+      }
+    }
+
+    function loadEmergencyElimMembers(tribeId) {
+      const wrap = document.getElementById('emergencyElimMembers');
+      if (!wrap) return;
+      if (!tribeId) {
+        wrap.innerHTML = '<div style="color: var(--ink-faded); font-style: italic; font-size: 0.9rem;">Pick a tribe to see members.</div>';
+        return;
+      }
+      wrap.innerHTML = '<div style="color: var(--ink-faded); font-style: italic;">Loading members…</div>';
+      google.script.run
+        .withSuccessHandler(function(members) {
+          const active = (members || []).filter(function(m) { return m.status === 'active'; });
+          if (active.length === 0) {
+            wrap.innerHTML = '<div style="color: var(--ink-faded); font-style: italic;">No active members in this tribe.</div>';
+            return;
+          }
+          wrap.innerHTML = '';
+          active.forEach(function(m) {
+            const row = document.createElement('label');
+            row.className = 'emergency-elim-member';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = m.id;
+            checkbox.dataset.memberName = m.name;
+            const label = document.createElement('span');
+            label.textContent = m.name;
+            row.appendChild(checkbox);
+            row.appendChild(label);
+            wrap.appendChild(row);
+          });
+        })
+        .withFailureHandler(function(err) {
+          wrap.innerHTML = '<div style="color: var(--blood);">Failed: ' + escapeHtml(err.message || err) + '</div>';
+        })
+        .getMembersForTribeAdmin(tribeId);
+    }
+
+    function emergencyDissolve() {
+      const sel = document.getElementById('emergencyDissolveSelect');
+      const tribeId = sel ? sel.value : '';
+      if (!tribeId) { showToast('Pick a tribe first', 'error'); return; }
+      const tribe = TRIBE_BY_ID[tribeId];
+      if (!confirm('Dissolve ' + (tribe ? tribe.name : 'this tribe') +
+          ' and redistribute all active members across remaining tribes?\n\n' +
+          'The merge ceremony will play on the Contest dashboard.')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          const summary = (res.reassignments || [])
+            .map(function(r) { return r.name + '→' + r.newTribe; }).join(', ');
+          showToast('Dissolved · ' + summary, 'success');
+          if (sel) sel.value = '';
+          loadMirror();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .dissolveTribeAndRedistribute(tribeId);
+    }
+
+    function emergencyEliminate() {
+      const tribeSel = document.getElementById('emergencyElimTribeSelect');
+      const tribeId = tribeSel ? tribeSel.value : '';
+      if (!tribeId) { showToast('Pick a tribe first', 'error'); return; }
+      const checkboxes = document.querySelectorAll('#emergencyElimMembers input[type="checkbox"]:checked');
+      if (checkboxes.length === 0) { showToast('Select at least one member', 'error'); return; }
+      const memberIds = [];
+      const memberNames = [];
+      checkboxes.forEach(function(cb) {
+        memberIds.push(cb.value);
+        memberNames.push(cb.dataset.memberName);
+      });
+      if (!confirm('Manually eliminate ' + memberNames.join(', ') + '?\n\n' +
+          'This bypasses the normal council vote. Members move to the Jury immediately.')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Eliminated · ' + memberNames.join(', '), 'success');
+          loadEmergencyElimMembers(tribeId);
+          loadMirror();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .manuallyEliminateMembers(tribeId, memberIds);
+    }
+
+    function emergencyResetMvp() {
+      if (!confirm('Reset MVP voting completely?\n\nClears all jury MVP votes and returns voting to "not started" state.')) return;
+      google.script.run
+        .withSuccessHandler(function() { showToast('MVP voting reset', 'success'); })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .resetMvpVoting();
+    }
+
+    function emergencyTriggerCeremony(type) {
+      if (!type) return;
+      google.script.run
+        .withSuccessHandler(function() { showToast(type + ' ceremony queued', 'success'); })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .triggerCeremonyForTesting(type, null);
+    }
+
+    function emergencyClearCeremonies() {
+      if (!confirm('Clear all queued ceremonies?\n\nAny ceremonies waiting to play on the Contest dashboard will be cancelled. Already-played ceremonies are unaffected.')) return;
+      google.script.run
+        .withSuccessHandler(function() { showToast('Ceremonies cleared', 'success'); })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .clearAllCeremonies();
+    }
+
+    function emergencyResetProgress() {
+      if (!confirm('⚠️ DESTRUCTIVE\n\nReset ALL contest progress?\n\nThis wipes:\n• All challenge results and scores\n• All eliminations\n• All votes (election, council, jury MVP)\n• All locked competitors\n• All escape room progress\n\nMembers and tribes are preserved. Use only to fully reset the contest.\n\nAre you absolutely sure?')) return;
+      if (!confirm('Last chance. This cannot be undone.\n\nProceed with full reset?')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('All progress reset', 'success');
+          loadDayControls();
+          loadMirror();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .resetContestProgress();
+    }
+
+    // Phase 5 — Escape Room Monitor
+    function loadEscapeRoomMonitor() {
+      google.script.run
+        .withSuccessHandler(renderEscapeRoomMonitor)
+        .withFailureHandler(function(err) {
+          document.getElementById('escapeRoomMonitor').innerHTML =
+            '<div class="empty-state" style="color:var(--blood);">Failed: ' + escapeHtml(err.message || err) + '</div>';
+        })
+        .getEscapeRoomAdminProgress();
+    }
+
+    function renderEscapeRoomMonitor(rows) {
+      const wrap = document.getElementById('escapeRoomMonitor');
+      wrap.innerHTML = '';
+      if (!rows || rows.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No data yet.</div>';
+        return;
+      }
+
+      // Sort: finished first by finish time, then by highest clue desc, then attempts asc
+      const sorted = rows.slice().sort(function(a, b) {
+        if (a.finished && !b.finished) return -1;
+        if (!a.finished && b.finished) return 1;
+        if (a.finished && b.finished) return new Date(a.finished_at) - new Date(b.finished_at);
+        if (a.highest_clue !== b.highest_clue) return b.highest_clue - a.highest_clue;
+        return a.attempts_total - b.attempts_total;
+      });
+
+      const grid = document.createElement('div');
+      grid.className = 'er-monitor-grid';
+
+      sorted.forEach(function(t, idx) {
+        const row = document.createElement('div');
+        row.className = 'er-monitor-row';
+        row.style.borderLeftColor = t.tribe_color_hex;
+
+        const place = document.createElement('div');
+        place.className = 'er-monitor-place';
+        place.textContent = '#' + (idx + 1);
+
+        const tribeInfo = document.createElement('div');
+        tribeInfo.className = 'er-monitor-tribe';
+        tribeInfo.innerHTML =
+          '<div class="er-monitor-name" style="color:' + t.tribe_color_hex + '">' + escapeHtml(t.tribe_name) + '</div>' +
+          '<div class="er-monitor-detail">' +
+          (t.finished ? 'Finished at ' + escapeHtml(formatChatTime(t.finished_at)) :
+                        'On clue ' + (t.highest_clue + 1 > t.total_clues ? t.total_clues : (t.highest_clue + 1)) + ' of ' + t.total_clues) +
+          ' · ' + t.attempts_total + ' total attempt' + (t.attempts_total === 1 ? '' : 's') +
+          '</div>';
+
+        const progress = document.createElement('div');
+        progress.className = 'er-monitor-bar';
+        for (let i = 1; i <= t.total_clues; i++) {
+          const seg = document.createElement('span');
+          seg.className = 'er-monitor-seg' + (i <= t.solved_count ? ' done' : '');
+          seg.style.background = i <= t.solved_count ? t.tribe_color_hex : 'rgba(0,0,0,0.08)';
+          progress.appendChild(seg);
+        }
+
+        row.appendChild(place);
+        row.appendChild(tribeInfo);
+        row.appendChild(progress);
+        grid.appendChild(row);
+      });
+
+      wrap.appendChild(grid);
+    }
+
+    function confirmComputeErPlacements() {
+      if (!confirm('Compute placements (1st–6th) based on current escape room progress?\n\nFinished tribes are ranked by finish time, then unfinished tribes by highest clue solved and fewest attempts. This writes Thursday\'s challenge results.')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          showToast('Placements saved · 1st–6th set', 'success');
+          loadEscapeRoomMonitor();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .computeEscapeRoomPlacements();
+    }
+
+    // =====================================================================
+    // PHASE 4 — IDOL CONTROLS
+    // =====================================================================
+    function loadIdolState() {
+      google.script.run
+        .withSuccessHandler(renderIdolState)
+        .withFailureHandler(function(err) {
+          document.getElementById('idolPanel').innerHTML =
+            '<div class="empty-state" style="color:var(--blood);">Failed to load: ' + escapeHtml(err.message || err) + '</div>';
+        })
+        .getIdolState();
+    }
+
+    function renderIdolState(state) {
+      const wrap = document.getElementById('idolPanel');
+      wrap.innerHTML = '';
+      if (!state || !state.idols || state.idols.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No idol data. Run setupSheets() to seed.</div>';
+        return;
+      }
+
+      // Two-column grid: Rammy on left, Bear on right
+      const grid = document.createElement('div');
+      grid.className = 'idol-grid';
+      state.idols.forEach(function(idol) {
+        grid.appendChild(buildIdolCard(idol));
+      });
+      wrap.appendChild(grid);
+    }
+
+    function buildIdolCard(idol) {
+      const card = document.createElement('div');
+      card.className = 'idol-card idol-card-' + idol.idol_id;
+
+      // Header with idol name
+      const head = document.createElement('div');
+      head.className = 'idol-card-head';
+      const nameEl = document.createElement('h3');
+      nameEl.className = 'idol-card-name';
+      nameEl.textContent = idol.idol_name;
+      head.appendChild(nameEl);
+      card.appendChild(head);
+
+      // State banner
+      const banner = document.createElement('div');
+      banner.className = 'idol-state-banner ' + (idol.state || 'unset');
+      const lbl = document.createElement('span');
+      lbl.className = 'label';
+      lbl.textContent = 'Status';
+      const headline = document.createElement('div');
+      headline.className = 'headline';
+      const detail = document.createElement('div');
+      detail.className = 'detail';
+
+      if (idol.state === 'unset') {
+        headline.textContent = 'No secret word set';
+        detail.textContent = 'Set a word below.';
+      } else if (idol.state === 'hidden') {
+        headline.textContent = 'Hidden — word: ' + (idol.secret_word || '(hidden)');
+        detail.textContent = 'Awaiting a finder.';
+      } else if (idol.state === 'claimed' && idol.holder) {
+        headline.innerHTML = 'Held by <span style="color:' + idol.holder.tribe_color_hex + '">' + escapeHtml(idol.holder.member_name) + '</span> · ' + escapeHtml(idol.holder.tribe_name);
+        detail.textContent = 'Their tribe is shielded from their next council.';
+      } else if (idol.state === 'played') {
+        headline.textContent = 'Played and consumed';
+        detail.textContent = 'No longer in play.';
+      }
+
+      banner.appendChild(lbl);
+      banner.appendChild(headline);
+      banner.appendChild(detail);
+      card.appendChild(banner);
+
+      // Set secret word section
+      const setHeading = document.createElement('div');
+      setHeading.className = 'idol-section-heading';
+      setHeading.textContent = 'Secret Word';
+      card.appendChild(setHeading);
+
+      const setRow = document.createElement('div');
+      setRow.className = 'idol-form-row';
+      const wordInput = document.createElement('input');
+      wordInput.type = 'text';
+      wordInput.className = 'idol-secret-input';
+      wordInput.dataset.idolId = idol.idol_id;
+      wordInput.placeholder = idol.state === 'unset' ? 'e.g. ANCHOR' : 'New word to overwrite';
+      const setBtn = document.createElement('button');
+      setBtn.type = 'button';
+      setBtn.className = 'btn btn-on-parchment';
+      setBtn.dataset.action = 'save-idol-secret';
+      setBtn.dataset.idolId = idol.idol_id;
+      setBtn.textContent = idol.state === 'unset' ? 'Hide ' + idol.idol_name : 'Update Word';
+      setRow.appendChild(wordInput);
+      setRow.appendChild(setBtn);
+      card.appendChild(setRow);
+
+      // Hint broadcaster (only when hidden or claimed)
+      if (idol.state !== 'unset' && idol.state !== 'played') {
+        const hintHeading = document.createElement('div');
+        hintHeading.className = 'idol-section-heading';
+        hintHeading.textContent = 'Drop a Hint';
+        card.appendChild(hintHeading);
+
+        const hintRow = document.createElement('div');
+        hintRow.className = 'idol-form-row';
+        const hintInput = document.createElement('input');
+        hintInput.type = 'text';
+        hintInput.className = 'idol-hint-input';
+        hintInput.dataset.idolId = idol.idol_id;
+        hintInput.placeholder = 'e.g. "Look near the library"';
+        const hintBtn = document.createElement('button');
+        hintBtn.type = 'button';
+        hintBtn.className = 'btn btn-on-parchment';
+        hintBtn.dataset.action = 'add-idol-hint';
+        hintBtn.dataset.idolId = idol.idol_id;
+        hintBtn.textContent = 'Broadcast';
+        hintRow.appendChild(hintInput);
+        hintRow.appendChild(hintBtn);
+        card.appendChild(hintRow);
+      }
+
+      // Hint log
+      if (idol.hint_log && idol.hint_log.length > 0) {
+        const logHeading = document.createElement('div');
+        logHeading.className = 'idol-section-heading';
+        logHeading.textContent = 'Hint Log';
+        card.appendChild(logHeading);
+
+        const log = document.createElement('div');
+        log.className = 'hint-log';
+        idol.hint_log.forEach(function(h) {
+          const div = document.createElement('div');
+          div.className = 'hint';
+          div.textContent = h;
+          log.appendChild(div);
+        });
+        card.appendChild(log);
+      }
+
+      // Manage actions
+      if (idol.state === 'claimed') {
+        const manageRow = document.createElement('div');
+        manageRow.className = 'idol-form-row';
+        manageRow.style.marginTop = '0.9rem';
+        const playedBtn = document.createElement('button');
+        playedBtn.type = 'button';
+        playedBtn.className = 'btn btn-on-parchment';
+        playedBtn.dataset.action = 'mark-idol-played';
+        playedBtn.dataset.idolId = idol.idol_id;
+        playedBtn.textContent = 'Mark as Played';
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'btn btn-danger';
+        resetBtn.dataset.action = 'reset-idol';
+        resetBtn.dataset.idolId = idol.idol_id;
+        resetBtn.textContent = 'Reset';
+        manageRow.appendChild(playedBtn);
+        manageRow.appendChild(resetBtn);
+        card.appendChild(manageRow);
+      } else if (idol.state === 'played' || idol.state === 'hidden') {
+        const manageRow = document.createElement('div');
+        manageRow.className = 'idol-form-row';
+        manageRow.style.marginTop = '0.9rem';
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'btn btn-danger';
+        resetBtn.dataset.action = 'reset-idol';
+        resetBtn.dataset.idolId = idol.idol_id;
+        resetBtn.textContent = 'Reset';
+        manageRow.appendChild(resetBtn);
+        card.appendChild(manageRow);
+      }
+
+      return card;
+    }
+
+    function saveIdolSecret(idolId) {
+      const input = document.querySelector('.idol-secret-input[data-idol-id="' + idolId + '"]');
+      if (!input) return;
+      const word = input.value.trim();
+      if (!word) { showToast('Word cannot be empty', 'error'); return; }
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Word set for ' + (idolId === 'rammy' ? 'Rammy' : 'The Bear'), 'success');
+          loadIdolState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setIdolSecret(idolId, word);
+    }
+
+    function addIdolHintNow(idolId) {
+      const input = document.querySelector('.idol-hint-input[data-idol-id="' + idolId + '"]');
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) { showToast('Hint cannot be empty', 'error'); return; }
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Hint broadcast', 'success');
+          input.value = '';
+          loadIdolState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .addIdolHint(idolId, text);
+    }
+
+    function confirmMarkIdolPlayed(idolId) {
+      const idolName = idolId === 'rammy' ? 'Rammy' : 'The Bear';
+      if (!confirm('Mark ' + idolName + ' as played?\n\nThis consumes ' + idolName + ' for the rest of the contest. The current holder loses their immunity.')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast(idolName + ' marked as played', 'success');
+          loadIdolState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .markIdolAsPlayed(idolId, '');
+    }
+
+    function confirmResetIdol(idolId) {
+      const idolName = idolId === 'rammy' ? 'Rammy' : 'The Bear';
+      if (!confirm('Reset ' + idolName + ' completely?\n\nThis clears the secret word, hints, holder, and played status for ' + idolName + '. The other idol is unaffected.')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast(idolName + ' reset', 'success');
+          loadIdolState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .resetIdol(idolId);
+    }
+
+    // =====================================================================
+    // PHASE 4 — ALL-TRIBES MIRROR
+    // =====================================================================
+    let SELECTED_MIRROR_TRIBE = null;
+
+    function buildMirrorTabs() {
+      const wrap = document.getElementById('mirrorTabs');
+      wrap.innerHTML = '';
+      TRIBES_DATA.forEach(function(t, idx) {
+        const tab = document.createElement('div');
+        tab.className = 'mirror-tab';
+        tab.dataset.action = 'select-mirror-tab';
+        tab.dataset.tribeId = t.id;
+        tab.style.setProperty('--tab-color', t.color_hex);
+        const sw = document.createElement('span');
+        sw.className = 'swatch';
+        sw.style.background = t.color_hex;
+        const lbl = document.createElement('span');
+        lbl.textContent = t.name;
+        tab.appendChild(sw);
+        tab.appendChild(lbl);
+        wrap.appendChild(tab);
+        if (idx === 0 && !SELECTED_MIRROR_TRIBE) SELECTED_MIRROR_TRIBE = t.id;
+      });
+      updateMirrorTabSelection();
+    }
+
+    function selectMirrorTab(tribeId) {
+      SELECTED_MIRROR_TRIBE = tribeId;
+      updateMirrorTabSelection();
+      loadMirror(); // re-render content with new selection
+    }
+
+    function updateMirrorTabSelection() {
+      document.querySelectorAll('.mirror-tab').forEach(function(tab) {
+        tab.classList.toggle('selected', tab.dataset.tribeId === SELECTED_MIRROR_TRIBE);
+      });
+    }
+
+    function loadMirror() {
+      google.script.run
+        .withSuccessHandler(renderMirror)
+        .withFailureHandler(function(err) {
+          document.getElementById('mirrorContent').innerHTML =
+            '<div class="empty-state" style="color:var(--blood);">Failed to load: ' + escapeHtml(err.message || err) + '</div>';
+        })
+        .getAllTribesAdminView();
+    }
+
+    function renderMirror(view) {
+      const content = document.getElementById('mirrorContent');
+      content.innerHTML = '';
+      if (!view || !view.tribes) {
+        content.innerHTML = '<div class="empty-state">No data.</div>';
+        return;
+      }
+
+      // Find selected tribe; default to first
+      let tribe = view.tribes.filter(function(t) { return t.id === SELECTED_MIRROR_TRIBE; })[0];
+      if (!tribe) tribe = view.tribes[0];
+      if (!tribe) return;
+      SELECTED_MIRROR_TRIBE = tribe.id;
+      updateMirrorTabSelection();
+
+      // Header strip
+      const head = document.createElement('div');
+      head.className = 'mirror-stat-row';
+      head.style.marginBottom = '0.6rem';
+      head.innerHTML =
+        '<span><strong>Rank:</strong> #' + tribe.rank + '</span>' +
+        '<span><strong>Points:</strong> ' + tribe.points + '</span>' +
+        '<span><strong>Active:</strong> ' + tribe.activeCount + '</span>' +
+        '<span><strong>Jury:</strong> ' + tribe.juryCount + '</span>';
+      content.appendChild(head);
+
+      // Grid: roster + locked competitors | tallies | chat
+      const grid = document.createElement('div');
+      grid.className = 'mirror-grid';
+
+      // Roster block
+      const rosterBlock = document.createElement('div');
+      rosterBlock.className = 'mirror-block';
+      rosterBlock.innerHTML = '<h4>Roster</h4>';
+      const roster = document.createElement('div');
+      roster.className = 'mirror-roster';
+      tribe.members.forEach(function(m) {
+        const row = document.createElement('div');
+        const cls = ['mirror-roster-row'];
+        if (m.status !== 'active') cls.push('snuffed');
+        else if (m.competed) cls.push('competed');
+        row.className = cls.join(' ');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name';
+        nameSpan.textContent = m.name;
+        row.appendChild(nameSpan);
+
+        if (m.status !== 'active') {
+          const pill = document.createElement('span');
+          pill.className = 'pill-tiny';
+          pill.style.color = 'var(--ink-faded)';
+          pill.textContent = 'Jury';
+          row.appendChild(pill);
+        } else if (m.competed) {
+          const pill = document.createElement('span');
+          pill.className = 'pill-tiny';
+          pill.style.color = 'var(--jade)';
+          pill.textContent = 'Competed';
+          row.appendChild(pill);
+        }
+        roster.appendChild(row);
+      });
+      rosterBlock.appendChild(roster);
+
+      // Locked competitors
+      if (tribe.lockedCompetitors && tribe.lockedCompetitors.length > 0) {
+        const lockedHeading = document.createElement('h4');
+        lockedHeading.style.marginTop = '0.9rem';
+        lockedHeading.textContent = 'Locked Competitors';
+        rosterBlock.appendChild(lockedHeading);
+        const dayNames = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri' };
+        tribe.lockedCompetitors.forEach(function(entry) {
+          entry.members.forEach(function(m) {
+            const pill = document.createElement('span');
+            pill.className = 'mirror-locked-pill';
+            pill.textContent = (dayNames[entry.day] || entry.day) + ' · ' + m.name;
+            rosterBlock.appendChild(pill);
+          });
+        });
+      }
+      grid.appendChild(rosterBlock);
+
+      // Tallies block
+      const talliesBlock = document.createElement('div');
+      talliesBlock.className = 'mirror-block';
+      let talliesContent = '';
+
+      if (tribe.electionTallies) {
+        talliesContent += '<h4>Election Tally · ' + (view.electionDay || '').toUpperCase() + '</h4>';
+        talliesContent += '<div style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:0.3rem;">' +
+          tribe.electionTallies.voters + ' tribe member(s) have voted</div>';
+        if (tribe.electionTallies.results.length === 0) {
+          talliesContent += '<div class="mirror-empty">No votes yet.</div>';
+        } else {
+          talliesContent += '<ul class="mirror-tally-list">';
+          tribe.electionTallies.results.forEach(function(r) {
+            talliesContent += '<li><span class="name">' + escapeHtml(r.name) + '</span><span class="votes">' + r.votes + '</span></li>';
+          });
+          talliesContent += '</ul>';
+        }
+      }
+
+      if (tribe.councilTallies) {
+        if (talliesContent) talliesContent += '<div style="height:1rem;"></div>';
+        talliesContent += '<h4 style="color:var(--blood);">Council Tally · ' + (view.councilDay || '').toUpperCase() + '</h4>';
+        talliesContent += '<div style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:0.3rem;">' +
+          tribe.councilTallies.voters + ' tribe member(s) have voted</div>';
+        if (tribe.councilTallies.results.length === 0) {
+          talliesContent += '<div class="mirror-empty">No votes yet.</div>';
+        } else {
+          talliesContent += '<ul class="mirror-tally-list">';
+          tribe.councilTallies.results.forEach(function(r) {
+            talliesContent += '<li><span class="name">' + escapeHtml(r.name) + '</span><span class="votes">' + r.votes + '</span></li>';
+          });
+          talliesContent += '</ul>';
+        }
+      }
+
+      if (!talliesContent) {
+        talliesContent = '<h4>Tallies</h4><div class="mirror-empty">No active election or council.</div>';
+      }
+      talliesBlock.innerHTML = talliesContent;
+      grid.appendChild(talliesBlock);
+
+      content.appendChild(grid);
+
+      // Chat (full width below)
+      const chatBlock = document.createElement('div');
+      chatBlock.className = 'mirror-block';
+      chatBlock.style.marginTop = '1rem';
+      chatBlock.innerHTML = '<h4>Recent Chat (last 25)</h4>';
+      const chatWrap = document.createElement('div');
+      chatWrap.className = 'mirror-chat';
+      chatWrap.style.setProperty('--tribe-color', tribe.color_hex);
+      if (!tribe.chat || tribe.chat.length === 0) {
+        chatWrap.innerHTML = '<div class="mirror-empty">No messages.</div>';
+      } else {
+        tribe.chat.forEach(function(m) {
+          const msg = document.createElement('div');
+          msg.className = 'mirror-chat-msg';
+          const head = document.createElement('div');
+          const name = document.createElement('span');
+          name.className = 'mirror-chat-name';
+          name.style.color = tribe.color_hex;
+          name.textContent = m.name;
+          const time = document.createElement('span');
+          time.className = 'mirror-chat-time';
+          time.textContent = formatChatTime(m.timestamp);
+          head.appendChild(name);
+          head.appendChild(time);
+          const text = document.createElement('div');
+          text.className = 'mirror-chat-text';
+          text.textContent = m.message;
+          msg.appendChild(head);
+          msg.appendChild(text);
+          chatWrap.appendChild(msg);
+        });
+      }
+      chatBlock.appendChild(chatWrap);
+      content.appendChild(chatBlock);
+    }
+
+    function formatChatTime(iso) {
+      try {
+        const d = new Date(iso);
+        const now = new Date();
+        const sameDay = d.toDateString() === now.toDateString();
+        const opts = { hour: 'numeric', minute: '2-digit' };
+        if (!sameDay) { opts.month = 'short'; opts.day = 'numeric'; }
+        return d.toLocaleTimeString([], opts);
+      } catch (e) { return ''; }
+    }
+
+    // =====================================================================
+    // UTILITIES
+    // =====================================================================
+    function showToast(msg, kind) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (kind ? (' ' + kind) : '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.className = 'toast'; }, 2400);
+    }
+
+    function showError(err) {
+      const list = document.getElementById('rosterList');
+      list.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'roster-loading';
+      div.style.color = 'var(--blood)';
+      div.textContent = 'Failed to load roster: ' + (err && err.message ? err.message : String(err));
+      list.appendChild(div);
+    }
+
+    function showFatal(err) {
+      const picker = document.getElementById('addTribePicker');
+      picker.classList.remove('loading');
+      picker.style.color = 'var(--blood)';
+      picker.textContent = 'Failed to load tribes: ' + (err && err.message ? err.message : String(err));
+    }
+
+    function needsDarkText(hex) {
+      const h = hex.replace('#', '');
+      const r = parseInt(h.substring(0,2), 16);
+      const g = parseInt(h.substring(2,4), 16);
+      const b = parseInt(h.substring(4,6), 16);
+      const luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+      return luminance > 0.7;
+    }
+  </script>
+</body>
+</html>
