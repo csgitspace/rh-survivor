@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Styles') ?>
+  <style>
+    /* =========================================================================
+       PHASE 3 — TRIBE DASHBOARD
+       Aesthetic: tribal banner with member roster as torches, ballot
+       parchment for voting, dark moody council mode for elimination.
+       ========================================================================= */
+
+    /* ---------- TRIBE BANNER ---------- */
+    .tribe-banner {
+      position: relative;
+      padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.5rem);
+      margin-top: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(232, 221, 196, 0.15);
+    }
+
+    /* ---------- JURY WELCOME BANNER ---------- */
+    .jury-welcome {
+      margin-top: 1rem;
+      padding: 1.4rem clamp(1.4rem, 2.5vw, 2rem);
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+      background:
+        linear-gradient(180deg, rgba(93, 59, 133, 0.18), rgba(93, 59, 133, 0.06)),
+        rgba(15, 24, 20, 0.7);
+      border: 1px solid rgba(93, 59, 133, 0.4);
+      border-left: 4px solid var(--rh-purple);
+      box-shadow: 0 4px 20px rgba(93, 59, 133, 0.15);
+      flex-wrap: wrap;
+    }
+    .jury-welcome-icon {
+      font-size: 2.4rem;
+      color: var(--rh-purple);
+      animation: flicker 3.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .jury-welcome-content { flex: 1; min-width: 240px; }
+    .jury-welcome-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: #B89AD8;
+      margin-bottom: 0.3rem;
+    }
+    .jury-welcome-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.45rem;
+      letter-spacing: 0.04em;
+      color: var(--parchment);
+      margin-bottom: 0.3rem;
+    }
+    .jury-welcome-subtitle {
+      color: var(--ink-cream-soft);
+      font-style: italic;
+      font-size: 1.05rem;
+    }
+    .jury-welcome-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.8rem 1.4rem;
+      border: 1px solid var(--rh-purple);
+      color: #B89AD8;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 2px;
+      transition: all 150ms var(--ease-snap);
+      flex-shrink: 0;
+    }
+    .jury-welcome-cta:hover {
+      background: var(--rh-purple);
+      color: var(--parchment);
+    }
+    .tribe-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, var(--tribe-color, var(--ember)) 0%, transparent 60%);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+    .tribe-banner::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 6px;
+      background: var(--tribe-color, var(--ember));
+      box-shadow: 0 0 30px var(--tribe-color, var(--ember));
+    }
+    .banner-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.36em;
+      text-transform: uppercase;
+      color: var(--ember);
+      margin-bottom: 0.6rem;
+    }
+    .banner-name {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0 0 0.5rem;
+      line-height: 1;
+    }
+    .banner-stats {
+      display: flex;
+      gap: 1.8rem;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .banner-stat {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+    }
+    .banner-stat strong {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1.7rem;
+      color: var(--parchment);
+      letter-spacing: 0;
+      margin-right: 0.4rem;
+    }
+
+    /* ---------- ROSTER / TORCHES ---------- */
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1.4rem;
+    }
+    .torch-tile {
+      padding: 0.9rem 1rem;
+      border: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(15, 24, 20, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .torch-tile.me {
+      border-color: var(--tribe-color);
+      background: rgba(15, 24, 20, 0.6);
+    }
+    .torch-tile.snuffed {
+      opacity: 0.45;
+      filter: grayscale(0.8);
+    }
+    .torch-icon {
+      font-size: 1.4rem;
+      color: var(--ember);
+      animation: flicker 3.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .torch-tile.snuffed .torch-icon {
+      color: var(--ink-faded);
+      animation: none;
+    }
+    .torch-tile.competed .torch-icon { color: var(--jade); }
+    .torch-name {
+      font-family: var(--font-body);
+      font-weight: 500;
+      color: var(--parchment);
+      font-size: 1.05rem;
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .torch-meta {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+      margin-top: 0.2rem;
+      display: block;
+    }
+
+    /* ---------- PANELS ---------- */
+    .tribe-panel {
+      margin-top: 1.4rem;
+      padding: clamp(1.2rem, 2.5vw, 2rem);
+      border: 1px solid rgba(232, 221, 196, 0.12);
+      background: rgba(15, 24, 20, 0.55);
+    }
+    .tribe-panel.urgent {
+      border-color: rgba(226, 114, 63, 0.4);
+      background:
+        linear-gradient(180deg, rgba(226, 114, 63, 0.06), transparent),
+        rgba(15, 24, 20, 0.55);
+    }
+    .tribe-panel.council {
+      background:
+        linear-gradient(180deg, rgba(139, 45, 41, 0.15), rgba(20, 8, 6, 0.6));
+      border-color: rgba(226, 114, 63, 0.4);
+    }
+    .panel-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ember);
+      margin-bottom: 0.5rem;
+    }
+    .panel-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0 0 0.4rem;
+    }
+    .panel-subtitle {
+      font-family: var(--font-body);
+      font-style: italic;
+      color: var(--ink-cream-soft);
+      margin-bottom: 1rem;
+      font-size: 1.02rem;
+    }
+
+    /* ---------- VOTE PICKER (election & council use the same pattern) ---------- */
+    .candidate-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.8rem;
+    }
+    .candidate-tile {
+      padding: 0.95rem 1.1rem;
+      border: 2px solid transparent;
+      background: rgba(232, 221, 196, 0.04);
+      cursor: pointer;
+      transition: all 150ms var(--ease-snap);
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--parchment);
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+    }
+    .candidate-tile:hover { background: rgba(232, 221, 196, 0.08); }
+    .candidate-tile.selected {
+      border-color: var(--tribe-color, var(--ember));
+      background: rgba(226, 114, 63, 0.1);
+    }
+    .candidate-tile.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .candidate-tile .pick-mark {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(232, 221, 196, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: transparent;
+      flex-shrink: 0;
+    }
+    .candidate-tile.selected .pick-mark {
+      background: var(--tribe-color, var(--ember));
+      border-color: var(--tribe-color, var(--ember));
+      color: var(--bg-deep);
+    }
+    /* Members who already competed this week — fully eligible, but visually de-emphasized */
+    .candidate-tile.has-competed {
+      opacity: 0.78;
+    }
+    .candidate-tile.has-competed.selected { opacity: 1; }
+    .candidate-tile.has-competed:hover { opacity: 1; }
+    .candidate-prev-competed {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--jade);
+      font-weight: 600;
+    }
+    .vote-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .vote-status {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+    }
+    .vote-status.success { color: var(--jade); }
+    .vote-status.error { color: #E58D88; }
+
+    /* ---------- LOCKED COMPETITORS ---------- */
+    .locked-list {
+      margin-top: 0.6rem;
+    }
+    .locked-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 1rem;
+      background: rgba(74, 140, 104, 0.08);
+      border-left: 3px solid var(--jade);
+      margin-bottom: 0.4rem;
+    }
+    .locked-row .check {
+      color: var(--jade);
+      font-size: 1.2rem;
+    }
+    .locked-row .day {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+      margin-right: auto;
+    }
+    .locked-row .names {
+      font-family: var(--font-body);
+      font-weight: 500;
+      color: var(--parchment);
+      font-size: 1.05rem;
+    }
+
+    /* ---------- CHAT ---------- */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 380px;
+      max-height: 60vh;
+      border: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(10, 15, 12, 0.5);
+      margin-top: 0.8rem;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--ink-faded) transparent;
+    }
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--ink-faded); border-radius: 3px; }
+    .chat-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      animation: fadeUp 350ms var(--ease-stage);
+    }
+    .chat-msg-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+    }
+    .chat-msg-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--tribe-color);
+      font-size: 0.95rem;
+    }
+    .chat-msg-time {
+      font-size: 0.85rem;
+      color: var(--ink-faded);
+      font-variant-numeric: tabular-nums;
+    }
+    .chat-msg-text {
+      color: var(--parchment);
+      line-height: 1.5;
+      word-wrap: break-word;
+      font-size: 1.05rem;
+    }
+    .chat-msg.me .chat-msg-name { color: var(--ember); }
+    .chat-empty {
+      text-align: center;
+      color: var(--ink-faded);
+      font-style: italic;
+      padding: 2rem;
+    }
+    .chat-input {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.7rem;
+      border-top: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(15, 24, 20, 0.6);
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 0.7rem 0.9rem;
+      background: rgba(232, 221, 196, 0.05);
+      border: 1px solid rgba(232, 221, 196, 0.15);
+      color: var(--parchment);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      border-radius: 2px;
+    }
+    .chat-input input:focus {
+      outline: none;
+      border-color: var(--tribe-color, var(--ember));
+    }
+    .chat-input button {
+      padding: 0.7rem 1.4rem;
+      background: var(--tribe-color, var(--ember));
+      border: none;
+      color: var(--bg-deep);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ---------- CONFESSIONAL ---------- */
+    .confessional-form {
+      margin-top: 0.6rem;
+    }
+    .confessional-form textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 0.8rem 1rem;
+      background: rgba(232, 221, 196, 0.04);
+      border: 1px solid rgba(232, 221, 196, 0.15);
+      color: var(--parchment);
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 1rem;
+      line-height: 1.5;
+      resize: vertical;
+      border-radius: 2px;
+    }
+    .confessional-form textarea:focus {
+      outline: none;
+      border-color: var(--ember);
+    }
+    .confessional-form .meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .char-count {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+      font-variant-numeric: tabular-nums;
+    }
+    .char-count.over { color: var(--blood); }
+
+    /* ---------- VOTE-RECORDED CALLOUT ---------- */
+    .voted-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1.1rem;
+      background: rgba(74, 140, 104, 0.12);
+      border: 1px solid var(--jade);
+      color: var(--jade);
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+
+    /* ---------- ESCAPE ROOM (Phase 5) ---------- */
+    .tribe-panel.escape-room {
+      background:
+        linear-gradient(180deg, rgba(93, 59, 133, 0.12), transparent),
+        rgba(15, 24, 20, 0.6);
+      border-color: rgba(93, 59, 133, 0.35);
+      border-left: 4px solid var(--rh-purple);
+    }
+
+    /* Progress bar — 4 segments showing solved/active/locked/unreleased */
+    .er-progress {
+      display: grid;
+      grid-template-columns: repeat(var(--er-clue-count, 4), 1fr);
+      gap: 0.4rem;
+      margin: 1.2rem 0 1.6rem;
+    }
+    .er-progress-step {
+      position: relative;
+      padding: 0.7rem 0.8rem 0.6rem;
+      border: 1px solid rgba(232, 221, 196, 0.15);
+      background: rgba(0, 0, 0, 0.25);
+      transition: all 200ms var(--ease-snap);
+    }
+    .er-progress-step.solved {
+      border-color: rgba(74, 140, 104, 0.5);
+      background: rgba(74, 140, 104, 0.1);
+    }
+    .er-progress-step.active {
+      border-color: var(--ember);
+      background: rgba(226, 114, 63, 0.12);
+      box-shadow: 0 0 16px rgba(226, 114, 63, 0.2);
+    }
+    .er-progress-step.locked {
+      opacity: 0.5;
+    }
+    .er-progress-step .er-step-num {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.14em;
+      color: var(--ink-cream-soft);
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+    .er-progress-step.solved .er-step-num { color: var(--jade); }
+    .er-progress-step.active .er-step-num { color: var(--ember); }
+    .er-progress-step .er-step-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--parchment);
+      letter-spacing: 0.04em;
+    }
+    .er-progress-step.locked .er-step-title { color: var(--ink-cream-soft); }
+    .er-progress-step .er-step-state {
+      margin-top: 0.3rem;
+      font-size: 0.92rem;
+      color: var(--ink-cream-soft);
+      font-style: italic;
+    }
+    .er-progress-step .er-step-icon {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.6rem;
+      font-size: 1.1rem;
+    }
+    .er-progress-step.solved .er-step-icon { color: var(--jade); }
+    .er-progress-step.active .er-step-icon { color: var(--ember); }
+    .er-progress-step.locked .er-step-icon { color: var(--ink-faded); }
+
+    /* Active clue card */
+    .er-active-clue {
+      padding: 1.5rem clamp(1.2rem, 2.5vw, 2rem);
+      background: rgba(10, 15, 12, 0.5);
+      border: 1px solid rgba(232, 221, 196, 0.1);
+      border-left: 3px solid var(--ember);
+      margin-top: 1rem;
+    }
+    .er-clue-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      margin-bottom: 0.7rem;
+      flex-wrap: wrap;
+    }
+    .er-clue-number {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ember);
+    }
+    .er-clue-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+      color: var(--parchment);
+      letter-spacing: 0.04em;
+      margin: 0;
+    }
+    .er-clue-riddle {
+      color: var(--ink-cream);
+      line-height: 1.7;
+      font-size: 1.1rem;
+      margin: 0.8rem 0;
+      white-space: pre-wrap;
+    }
+    .er-clue-image {
+      max-width: 100%;
+      width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      border: 1px solid rgba(232, 221, 196, 0.1);
+      background: rgba(255, 255, 255, 0.02);
+      margin: 1rem 0;
+      display: block;
+    }
+    .er-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .er-input-row input {
+      flex: 1;
+      min-width: 200px;
+      padding: 1rem 1.1rem;
+      background: rgba(232, 221, 196, 0.06);
+      border: 1px solid rgba(232, 221, 196, 0.2);
+      color: var(--parchment);
+      font-family: var(--font-body);
+      font-size: 1.15rem;
+      letter-spacing: 0.04em;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+    .er-input-row input:focus {
+      outline: none;
+      border-color: var(--ember);
+      background: rgba(232, 221, 196, 0.1);
+    }
+    .er-input-row input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .er-input-row button {
+      padding: 1rem 1.7rem;
+      background: var(--ember);
+      border: none;
+      color: var(--bg-deep);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .er-input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ============== DRAMATIC FEEDBACK STATES ============== */
+    /* Old subtle strip — replaced by overlays below, but kept for cooldown messages */
+    .er-feedback {
+      margin-top: 1rem;
+      padding: 0.95rem 1.2rem;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      border-radius: 2px;
+      display: none;
+    }
+    .er-feedback.show { display: block; animation: fadeUp 350ms var(--ease-stage); }
+    .er-feedback.info {
+      background: rgba(93, 59, 133, 0.15);
+      border-left: 3px solid var(--rh-purple);
+      color: #B89AD8;
+    }
+
+    /* Big celebratory CORRECT card */
+    .er-result-overlay {
+      margin-top: 1rem;
+      padding: 2.4rem 2rem;
+      text-align: center;
+      border-radius: 2px;
+      animation: resultPop 480ms var(--ease-stage);
+    }
+    @keyframes resultPop {
+      0%   { opacity: 0; transform: scale(0.92); }
+      60%  { opacity: 1; transform: scale(1.02); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .er-result-overlay.correct {
+      background:
+        radial-gradient(ellipse at center, rgba(74, 140, 104, 0.3), transparent 70%),
+        rgba(74, 140, 104, 0.12);
+      border: 2px solid var(--jade);
+      box-shadow:
+        0 0 40px rgba(74, 140, 104, 0.4),
+        0 0 80px rgba(74, 140, 104, 0.15);
+      animation: resultPop 480ms var(--ease-stage), correctGlow 1.6s ease-in-out infinite;
+    }
+    @keyframes correctGlow {
+      0%, 100% { box-shadow: 0 0 40px rgba(74, 140, 104, 0.4), 0 0 80px rgba(74, 140, 104, 0.15); }
+      50%      { box-shadow: 0 0 60px rgba(74, 140, 104, 0.55), 0 0 120px rgba(74, 140, 104, 0.25); }
+    }
+    .er-result-overlay.correct .er-result-icon {
+      font-size: 4.5rem;
+      color: var(--jade);
+      margin-bottom: 0.6rem;
+      display: block;
+      line-height: 1;
+      filter: drop-shadow(0 0 12px rgba(74, 140, 104, 0.6));
+    }
+    .er-result-overlay.correct .er-result-headline {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.4rem, 4vw, 3.4rem);
+      letter-spacing: 0.12em;
+      color: var(--jade);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      text-shadow: 0 2px 12px rgba(74, 140, 104, 0.4);
+    }
+    .er-result-overlay.correct .er-result-detail {
+      font-size: 1.15rem;
+      color: var(--parchment);
+      font-style: italic;
+    }
+
+    /* Big WRONG card with shake */
+    .er-result-overlay.wrong {
+      background:
+        radial-gradient(ellipse at center, rgba(139, 45, 41, 0.25), transparent 70%),
+        rgba(139, 45, 41, 0.1);
+      border: 2px solid #B83C36;
+      box-shadow: 0 0 30px rgba(139, 45, 41, 0.3);
+      animation: resultPop 240ms var(--ease-stage), shakeNo 480ms ease-in-out;
+    }
+    @keyframes shakeNo {
+      0%, 100% { transform: translateX(0); }
+      15%      { transform: translateX(-12px); }
+      30%      { transform: translateX(10px); }
+      45%      { transform: translateX(-8px); }
+      60%      { transform: translateX(6px); }
+      75%      { transform: translateX(-4px); }
+      90%      { transform: translateX(2px); }
+    }
+    .er-result-overlay.wrong .er-result-icon {
+      font-size: 4rem;
+      color: #E58D88;
+      margin-bottom: 0.5rem;
+      display: block;
+      line-height: 1;
+    }
+    .er-result-overlay.wrong .er-result-headline {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2rem, 3.4vw, 2.8rem);
+      letter-spacing: 0.1em;
+      color: #E58D88;
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+    .er-result-overlay.wrong .er-result-detail {
+      font-size: 1.1rem;
+      color: var(--ink-cream);
+    }
+    .er-result-overlay.wrong .er-cooldown-bigtimer {
+      display: block;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(3.4rem, 6vw, 5rem);
+      color: #E58D88;
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+      margin-top: 0.6rem;
+      line-height: 1;
+      text-shadow: 0 2px 10px rgba(139, 45, 41, 0.4);
+    }
+    .er-result-overlay.wrong .er-cooldown-label {
+      display: block;
+      margin-top: 0.4rem;
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+    }
+
+    /* Waiting / unlock state */
+    .er-waiting {
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background: rgba(10, 15, 12, 0.4);
+      border: 1px dashed rgba(232, 221, 196, 0.15);
+      margin-top: 1rem;
+    }
+    .er-waiting .icon {
+      font-size: 2rem;
+      color: var(--rh-purple);
+      animation: flicker 3.4s ease-in-out infinite;
+      display: block;
+      margin-bottom: 0.7rem;
+    }
+    .er-waiting .heading {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: var(--parchment);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+    .er-waiting .countdown {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 2.8rem;
+      color: var(--ember);
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+      margin: 0.4rem 0;
+    }
+    .er-waiting .detail {
+      color: var(--ink-cream-soft);
+      font-style: italic;
+      font-size: 1.05rem;
+    }
+
+    /* Finished state */
+    .er-finished {
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(74, 140, 104, 0.1), transparent),
+        rgba(10, 15, 12, 0.4);
+      border: 1px solid rgba(74, 140, 104, 0.4);
+      margin-top: 1rem;
+    }
+    .er-finished .icon {
+      font-size: 2.4rem;
+      color: var(--jade);
+      display: block;
+      margin-bottom: 0.6rem;
+    }
+    .er-finished .heading {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+      color: var(--parchment);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .er-finished .time {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--jade);
+      letter-spacing: 0.06em;
+      margin: 0.4rem 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .er-finished .detail {
+      color: var(--ink-cream-soft);
+      font-style: italic;
+      max-width: 50ch;
+      margin: 0.6rem auto 0;
+      font-size: 1.05rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 0.85rem 1.4rem;
+      background: var(--ink);
+      color: var(--parchment);
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      box-shadow: var(--shadow-deep);
+      z-index: 1000;
+      transition: transform 300ms var(--ease-stage);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #2D5C3D; }
+    .toast.error { background: var(--blood); }
+
+    .empty-state {
+      color: var(--ink-faded);
+      font-style: italic;
+      padding: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <?!= include('Header', {userEmail: userEmail, userRole: userRole, scriptUrl: scriptUrl, pageView: pageView}) ?>
+
+  <main class="shell">
+    <!-- Jury welcome banner (only shown to jury viewing their old tribe) -->
+    <section id="juryWelcomeBanner" class="jury-welcome" style="display: none;">
+      <div class="jury-welcome-icon">✦</div>
+      <div class="jury-welcome-content">
+        <div class="jury-welcome-eyebrow">Welcome to the Jury</div>
+        <div class="jury-welcome-title" id="juryWelcomeTitle">Your time on the tribe has ended.</div>
+        <div class="jury-welcome-subtitle">You'll vote for the Ultimate Roy-Hart Survivor on Friday. Until then, watch and consider.</div>
+      </div>
+      <a href="<?= scriptUrl ?>?view=jury" class="jury-welcome-cta" id="juryWelcomeCta">Visit Jury Dashboard →</a>
+    </section>
+
+    <!-- Tribe banner -->
+    <section id="tribeBanner" class="tribe-banner">
+      <div class="banner-eyebrow" id="bannerEyebrow">Loading…</div>
+      <h1 class="banner-name" id="bannerName">—</h1>
+      <div class="banner-stats">
+        <div class="banner-stat"><strong id="bannerRank">—</strong>Rank</div>
+        <div class="banner-stat"><strong id="bannerPoints">—</strong>Points</div>
+        <div class="banner-stat"><strong id="bannerActive">—</strong>In the Game</div>
+      </div>
+    </section>
+
+    <!-- Roster of torches -->
+    <section class="tribe-panel">
+      <div class="panel-eyebrow">Your Tribe</div>
+      <h2 class="panel-title">The Torches</h2>
+      <div id="rosterGrid" class="roster-grid"></div>
+    </section>
+
+    <!-- Locked competitors (if any) -->
+    <section id="lockedSection" class="tribe-panel" style="display: none;">
+      <div class="panel-eyebrow">Locked In</div>
+      <h2 class="panel-title">Your Competitors</h2>
+      <div id="lockedList" class="locked-list"></div>
+    </section>
+
+    <!-- Election panel (visible when election open) -->
+    <section id="electionSection" class="tribe-panel urgent" style="display: none;">
+      <div class="panel-eyebrow">Election Open</div>
+      <h2 class="panel-title" id="electionTitle">Pick Tomorrow's Competitors</h2>
+      <p class="panel-subtitle">Cast 2 votes for the tribemates you want competing. Already-competed members can be re-elected if you're short on fresh blood. You can change your votes until polls close.</p>
+      <div id="electionCandidates" class="candidate-list"></div>
+      <div class="vote-actions">
+        <button class="btn btn-primary" data-action="submit-election">Submit Votes</button>
+        <button class="btn btn-on-parchment" data-action="clear-election">Clear</button>
+        <span id="electionStatus" class="vote-status"></span>
+      </div>
+    </section>
+
+    <!-- Tribal Council (visible only when council open AND it's our tribe) -->
+    <section id="councilSection" class="tribe-panel council" style="display: none;">
+      <div class="panel-eyebrow" style="color: #E58D88;">Tribal Council</div>
+      <h2 class="panel-title">Council Vote</h2>
+      <p class="panel-subtitle">Your tribe lost the challenge. Cast 2 anonymous votes for the two tribemates to send to the Jury.</p>
+      <div id="councilCandidates" class="candidate-list"></div>
+      <div class="vote-actions">
+        <button class="btn btn-primary" data-action="submit-council">Cast Votes</button>
+        <button class="btn btn-on-parchment" data-action="clear-council">Clear</button>
+        <span id="councilStatus" class="vote-status"></span>
+      </div>
+    </section>
+
+    <!-- Escape Room (Phase 5) — visible only on Thursday -->
+    <section id="escapeRoomSection" class="tribe-panel escape-room" style="display: none;">
+      <div class="panel-eyebrow" style="color: #B89AD8;">Thursday's Challenge</div>
+      <h2 class="panel-title">Survivor Escape Room</h2>
+      <p class="panel-subtitle">Four sequential clues. Solve each one to unlock the next. Strategize as a tribe — anyone can submit on the tribe's behalf.</p>
+
+      <!-- Progress bar -->
+      <div id="escapeRoomProgress" class="er-progress"></div>
+
+      <!-- Active clue -->
+      <div id="escapeRoomBody"></div>
+    </section>
+
+    <!-- Tribe chat -->
+    <section class="tribe-panel">
+      <div class="panel-eyebrow">Tribe Chat</div>
+      <h2 class="panel-title">Strategy Camp</h2>
+      <p class="panel-subtitle">Visible to your tribe and (eventually) the jury. Speak carefully.</p>
+      <div class="chat-container">
+        <div id="chatMessages" class="chat-messages">
+          <div class="chat-empty">No messages yet. Start the conversation.</div>
+        </div>
+        <form id="chatForm" class="chat-input">
+          <input type="text" id="chatInput" placeholder="Say something to your tribe…" maxlength="500" autocomplete="off">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Confessional -->
+    <section class="tribe-panel">
+      <div class="panel-eyebrow">Confessional</div>
+      <h2 class="panel-title">A Word to the Camera</h2>
+      <p class="panel-subtitle">Your quote scrolls on the public Contest Dashboard ticker. 200 characters max.</p>
+      <form class="confessional-form" id="confessionalForm">
+        <textarea id="confessionalText" placeholder="When the merge happens, I'm coming for them all…" maxlength="220"></textarea>
+        <div class="meta">
+          <button type="submit" class="btn btn-primary">Submit Confessional</button>
+          <span id="charCount" class="char-count">0 / 200</span>
+          <span id="confessionalStatus" class="vote-status"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Idol Claim (Phase 4) -->
+    <section class="tribe-panel" id="idolClaimPanel">
+      <div class="panel-eyebrow">A Whisper in the Trees</div>
+      <h2 class="panel-title">Did You Find Something?</h2>
+      <p class="panel-subtitle">Two hidden idols — <strong style="color: #E58D88;">Rammy</strong> and <strong style="color: #B89AD8;">The Bear</strong> — are hidden somewhere in the school. If you found a secret word, enter it below. Your tribe will be shielded from the next council.</p>
+      <form id="idolForm" class="confessional-form">
+        <input type="text" id="idolInput" placeholder="Enter the secret word…" maxlength="60" autocomplete="off"
+               style="width: 100%; padding: 0.8rem 1rem; background: rgba(232, 221, 196, 0.04); border: 1px solid rgba(232, 221, 196, 0.15); color: var(--parchment); font-family: var(--font-body); font-size: 1rem; border-radius: 2px;">
+        <div class="meta">
+          <button type="submit" class="btn btn-primary">Claim the Idol</button>
+          <span id="idolStatus" class="vote-status"></span>
+        </div>
+      </form>
+    </section>
+
+    <footer class="foot">
+      <div class="ornament">✦ ✦ ✦</div>
+      Roy-Hart Middle School · Survivor Week · v0.4 (Phase 3 — Tribe Dashboard)
+    </footer>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // No template scriptlets in this script — all data via google.script.run.
+
+    let STATE = null;
+    let SELECTED_ELECTION = []; // member ids
+    let SELECTED_COUNCIL = [];  // member ids
+    let POLL_TIMER = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('click', handleClick);
+
+      const chatForm = document.getElementById('chatForm');
+      if (chatForm) chatForm.addEventListener('submit', handleChatSubmit);
+
+      const confForm = document.getElementById('confessionalForm');
+      if (confForm) confForm.addEventListener('submit', handleConfessionalSubmit);
+
+      const confText = document.getElementById('confessionalText');
+      if (confText) confText.addEventListener('input', updateCharCount);
+
+      const idolForm = document.getElementById('idolForm');
+      if (idolForm) idolForm.addEventListener('submit', handleIdolSubmit);
+
+      pollState();
+      POLL_TIMER = setInterval(pollState, 5000);
+    });
+
+    function pollState() {
+      google.script.run
+        .withSuccessHandler(onStateLoaded)
+        .withFailureHandler(showFatal)
+        .getTribeState();
+    }
+
+    // ====================================================================
+    // RENDER
+    // ====================================================================
+    function onStateLoaded(state) {
+      const wasFirstLoad = !STATE;
+      STATE = state;
+      if (state && state.tribe) {
+        document.body.style.setProperty('--tribe-color', state.tribe.color_hex);
+      }
+      renderJuryWelcome(state);
+      renderBanner(state);
+      renderRoster(state);
+      renderLocked(state);
+      renderElection(state);
+      renderCouncil(state);
+      renderEscapeRoom(state);
+      renderChat(state, wasFirstLoad);
+      renderRestrictedNotice(state);
+    }
+
+    function renderJuryWelcome(state) {
+      const banner = document.getElementById('juryWelcomeBanner');
+      if (!banner) return;
+      if (state && state.me && state.me.status === 'jury') {
+        banner.style.display = 'flex';
+        const title = document.getElementById('juryWelcomeTitle');
+        if (title && state.me.name) {
+          title.textContent = state.me.name + ', your time on the tribe has ended.';
+        }
+        // CTA href is rendered server-side with scriptUrl — no JS work needed
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    // For jury viewers: disable interactive elements and show a notice
+    function renderRestrictedNotice(state) {
+      const isJury = state && state.me && state.me.status === 'jury';
+      // Disable chat input
+      const chatInput = document.getElementById('chatInput');
+      const chatForm = document.getElementById('chatForm');
+      if (chatInput && chatForm) {
+        chatInput.disabled = isJury;
+        chatInput.placeholder = isJury ? 'You are on the jury — chat is read-only here.' : 'Say something to your tribe…';
+        const chatBtn = chatForm.querySelector('button');
+        if (chatBtn) chatBtn.disabled = isJury;
+      }
+      // Disable confessional
+      const confText = document.getElementById('confessionalText');
+      const confForm = document.getElementById('confessionalForm');
+      if (confText && confForm) {
+        confText.disabled = isJury;
+        if (isJury) confText.placeholder = 'Confessionals are for active castaways.';
+        const confBtn = confForm.querySelector('button[type="submit"]');
+        if (confBtn) confBtn.disabled = isJury;
+      }
+      // Disable idol claim
+      const idolInput = document.getElementById('idolInput');
+      const idolForm = document.getElementById('idolForm');
+      if (idolInput && idolForm) {
+        idolInput.disabled = isJury;
+        if (isJury) idolInput.placeholder = 'The idol is for active castaways.';
+        const idolBtn = idolForm.querySelector('button[type="submit"]');
+        if (idolBtn) idolBtn.disabled = isJury;
+      }
+    }
+
+    function renderBanner(state) {
+      if (!state || !state.tribe) return;
+      const t = state.tribe;
+      document.getElementById('bannerEyebrow').textContent = t.color_label.toUpperCase() + ' TRIBE · ' + (state.me.name || '').toUpperCase();
+      document.getElementById('bannerName').textContent = t.name;
+      document.getElementById('bannerRank').textContent = '#' + t.rank;
+      document.getElementById('bannerPoints').textContent = t.points;
+      document.getElementById('bannerActive').textContent = t.activeCount + ' / ' + (t.activeCount + t.juryCount);
+    }
+
+    function renderRoster(state) {
+      const grid = document.getElementById('rosterGrid');
+      grid.innerHTML = '';
+      if (!state || !state.tribe || !state.tribe.members) return;
+
+      state.tribe.members.forEach(function(m) {
+        const tile = document.createElement('div');
+        const classes = ['torch-tile'];
+        if (m.email && state.me && m.email.toLowerCase() === state.me.email.toLowerCase()) classes.push('me');
+        if (m.status !== 'active') classes.push('snuffed');
+        else if (m.competed) classes.push('competed');
+        tile.className = classes.join(' ');
+
+        const torch = document.createElement('span');
+        torch.className = 'torch-icon';
+        torch.textContent = m.status === 'active' ? '𓊝' : '◯';
+        tile.appendChild(torch);
+
+        const info = document.createElement('div');
+        info.style.flex = '1';
+        info.style.minWidth = '0';
+        const name = document.createElement('div');
+        name.className = 'torch-name';
+        name.textContent = m.name;
+        info.appendChild(name);
+        const meta = document.createElement('span');
+        meta.className = 'torch-meta';
+        if (m.status !== 'active') meta.textContent = 'Jury';
+        else if (m.competed) meta.textContent = 'Competed';
+        else meta.textContent = 'Active';
+        info.appendChild(meta);
+        tile.appendChild(info);
+
+        grid.appendChild(tile);
+      });
+    }
+
+    function renderLocked(state) {
+      const section = document.getElementById('lockedSection');
+      const list = document.getElementById('lockedList');
+      list.innerHTML = '';
+      const locked = (state && state.election && state.election.lockedCompetitors) || [];
+      if (locked.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+
+      const dayNames = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday' };
+      locked.forEach(function(entry) {
+        const row = document.createElement('div');
+        row.className = 'locked-row';
+        const check = document.createElement('span');
+        check.className = 'check';
+        check.textContent = '✓';
+        const day = document.createElement('span');
+        day.className = 'day';
+        day.textContent = dayNames[entry.day] || entry.day;
+        const names = document.createElement('span');
+        names.className = 'names';
+        names.textContent = entry.members.map(function(m) { return m.name; }).join('  &  ');
+        row.appendChild(check);
+        row.appendChild(day);
+        row.appendChild(names);
+        list.appendChild(row);
+      });
+    }
+
+    function renderElection(state) {
+      const section = document.getElementById('electionSection');
+      const titleEl = document.getElementById('electionTitle');
+      const list = document.getElementById('electionCandidates');
+      const status = document.getElementById('electionStatus');
+
+      if (!state || !state.election || !state.election.open) {
+        section.style.display = 'none';
+        return;
+      }
+
+      const dayNames = { mon: "Monday's", tue: "Tuesday's", wed: "Wednesday's",
+                         thu: "Thursday's", fri: "Friday's" };
+      titleEl.textContent = 'Pick ' + (dayNames[state.election.day] || "the next day's") + ' Competitors';
+
+      // Initialize selection from server state on first render OR keep local edits
+      // If SELECTED_ELECTION is empty and server has my votes, pre-fill from server
+      if (SELECTED_ELECTION.length === 0 && state.election.myVotes && state.election.myVotes.length > 0) {
+        // Convert email votes back to member ids
+        const emailToId = {};
+        state.tribe.members.forEach(function(m) { emailToId[m.email.toLowerCase()] = m.id; });
+        SELECTED_ELECTION = state.election.myVotes
+          .map(function(em) { return emailToId[(em || '').toLowerCase()]; })
+          .filter(Boolean);
+      }
+
+      list.innerHTML = '';
+      const candidates = state.election.candidates || [];
+      if (candidates.length === 0) {
+        list.innerHTML = '<div class="empty-state">No eligible candidates.</div>';
+      } else {
+        candidates.forEach(function(c) {
+          const tile = makeCandidateTile(c, SELECTED_ELECTION.indexOf(c.id) !== -1, 'toggle-election');
+          list.appendChild(tile);
+        });
+      }
+
+      // Status line
+      if (state.election.myVotes && state.election.myVotes.length > 0) {
+        status.textContent = 'Saved · ' + state.election.myVotes.length + ' vote(s) on record';
+        status.className = 'vote-status success';
+      } else {
+        status.textContent = 'Pick up to 2 candidates';
+        status.className = 'vote-status';
+      }
+
+      section.style.display = 'block';
+    }
+
+    function renderCouncil(state) {
+      const section = document.getElementById('councilSection');
+      const list = document.getElementById('councilCandidates');
+      const status = document.getElementById('councilStatus');
+
+      if (!state || !state.council || !state.council.open || !state.council.isOurTribe) {
+        section.style.display = 'none';
+        return;
+      }
+
+      // Pre-fill selection from server if empty
+      if (SELECTED_COUNCIL.length === 0 && state.council.myVotes && state.council.myVotes.length > 0) {
+        const emailToId = {};
+        state.tribe.members.forEach(function(m) { emailToId[m.email.toLowerCase()] = m.id; });
+        SELECTED_COUNCIL = state.council.myVotes
+          .map(function(em) { return emailToId[(em || '').toLowerCase()]; })
+          .filter(Boolean);
+      }
+
+      list.innerHTML = '';
+      const candidates = state.council.candidates || [];
+      candidates.forEach(function(c) {
+        const tile = makeCandidateTile(c, SELECTED_COUNCIL.indexOf(c.id) !== -1, 'toggle-council');
+        list.appendChild(tile);
+      });
+
+      if (state.council.hasVoted) {
+        status.innerHTML = '<span class="voted-pill">✓ Your vote is recorded</span>';
+        status.className = 'vote-status';
+      } else {
+        status.textContent = 'Cast up to 2 anonymous votes';
+        status.className = 'vote-status';
+      }
+
+      section.style.display = 'block';
+    }
+
+    function makeCandidateTile(candidate, isSelected, action) {
+      const tile = document.createElement('div');
+      tile.className = 'candidate-tile' + (isSelected ? ' selected' : '');
+      tile.dataset.action = action;
+      tile.dataset.memberId = candidate.id;
+
+      const mark = document.createElement('span');
+      mark.className = 'pick-mark';
+      mark.textContent = isSelected ? '✓' : '';
+      tile.appendChild(mark);
+
+      // Name + (optional) previous-competition tag
+      const nameWrap = document.createElement('span');
+      nameWrap.className = 'candidate-tile-name-wrap';
+      nameWrap.style.display = 'flex';
+      nameWrap.style.flexDirection = 'column';
+      nameWrap.style.gap = '0.15rem';
+      nameWrap.style.flex = '1';
+      nameWrap.style.minWidth = '0';
+
+      const name = document.createElement('span');
+      name.textContent = candidate.name;
+      nameWrap.appendChild(name);
+
+      // Show "✓ competed Mon, Wed" tag if this member has played before
+      if (candidate.previousCompetitions && candidate.previousCompetitions.length > 0) {
+        const dayLabels = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri' };
+        const labels = candidate.previousCompetitions.map(function(d) { return dayLabels[d] || d; });
+        const tag = document.createElement('span');
+        tag.className = 'candidate-prev-competed';
+        tag.textContent = '✓ Competed ' + labels.join(', ');
+        nameWrap.appendChild(tag);
+        tile.classList.add('has-competed');
+      }
+
+      tile.appendChild(nameWrap);
+      return tile;
+    }
+
+    function renderChat(state, autoScroll) {
+      const wrap = document.getElementById('chatMessages');
+      const messages = (state && state.chat) || [];
+
+      if (messages.length === 0) {
+        wrap.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation.</div>';
+        return;
+      }
+
+      // Track scroll position before re-render to decide if we should auto-scroll
+      const wasAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 80;
+
+      wrap.innerHTML = '';
+      messages.forEach(function(m) {
+        const div = document.createElement('div');
+        const isMe = state.me && m.email && m.email.toLowerCase() === state.me.email.toLowerCase();
+        div.className = 'chat-msg' + (isMe ? ' me' : '');
+
+        const head = document.createElement('div');
+        head.className = 'chat-msg-head';
+        const name = document.createElement('span');
+        name.className = 'chat-msg-name';
+        name.textContent = m.name + (isMe ? ' (you)' : '');
+        const time = document.createElement('span');
+        time.className = 'chat-msg-time';
+        time.textContent = formatChatTime(m.timestamp);
+        head.appendChild(name);
+        head.appendChild(time);
+
+        const text = document.createElement('div');
+        text.className = 'chat-msg-text';
+        text.textContent = m.message;
+
+        div.appendChild(head);
+        div.appendChild(text);
+        wrap.appendChild(div);
+      });
+
+      // Auto-scroll if we were at bottom or it's the first load
+      if (wasAtBottom || autoScroll) {
+        wrap.scrollTop = wrap.scrollHeight;
+      }
+    }
+
+    function formatChatTime(iso) {
+      try {
+        const d = new Date(iso);
+        const now = new Date();
+        const sameDay = d.toDateString() === now.toDateString();
+        const opts = { hour: 'numeric', minute: '2-digit' };
+        if (!sameDay) { opts.month = 'short'; opts.day = 'numeric'; }
+        return d.toLocaleTimeString([], opts);
+      } catch (e) { return ''; }
+    }
+
+    // ====================================================================
+    // EVENT HANDLERS
+    // ====================================================================
+    function handleClick(e) {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+      switch (action) {
+        case 'toggle-election':
+          toggleSelection(SELECTED_ELECTION, target.dataset.memberId, 'electionCandidates');
+          break;
+        case 'toggle-council':
+          toggleSelection(SELECTED_COUNCIL, target.dataset.memberId, 'councilCandidates');
+          break;
+        case 'submit-election':
+          submitElection();
+          break;
+        case 'clear-election':
+          SELECTED_ELECTION = [];
+          updateTilesIn('electionCandidates', SELECTED_ELECTION);
+          break;
+        case 'submit-council':
+          submitCouncil();
+          break;
+        case 'clear-council':
+          SELECTED_COUNCIL = [];
+          updateTilesIn('councilCandidates', SELECTED_COUNCIL);
+          break;
+        case 'submit-er-attempt':
+          submitErAttempt();
+          break;
+      }
+    }
+
+    function toggleSelection(arr, id, containerId) {
+      const idx = arr.indexOf(id);
+      if (idx !== -1) {
+        arr.splice(idx, 1);
+      } else {
+        if (arr.length >= 2) {
+          showToast('Max 2 votes — deselect one first', 'error');
+          return;
+        }
+        arr.push(id);
+      }
+      updateTilesIn(containerId, arr);
+    }
+
+    function updateTilesIn(containerId, selectedIds) {
+      const wrap = document.getElementById(containerId);
+      if (!wrap) return;
+      wrap.querySelectorAll('.candidate-tile').forEach(function(tile) {
+        const isSel = selectedIds.indexOf(tile.dataset.memberId) !== -1;
+        tile.classList.toggle('selected', isSel);
+        const mark = tile.querySelector('.pick-mark');
+        if (mark) mark.textContent = isSel ? '✓' : '';
+      });
+    }
+
+    function submitElection() {
+      if (!STATE || !STATE.election || !STATE.election.day) {
+        showToast('No active election', 'error');
+        return;
+      }
+      const status = document.getElementById('electionStatus');
+      status.textContent = 'Saving…';
+      status.className = 'vote-status';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          status.textContent = 'Saved · ' + (res.votes || 0) + ' vote(s) on record';
+          status.className = 'vote-status success';
+          showToast('Votes recorded', 'success');
+          pollState();
+        })
+        .withFailureHandler(function(err) {
+          status.textContent = err.message || 'Save failed';
+          status.className = 'vote-status error';
+          showToast(err.message || 'Save failed', 'error');
+        })
+        .submitElectionVotes(STATE.election.day, SELECTED_ELECTION);
+    }
+
+    function submitCouncil() {
+      if (!STATE || !STATE.council || !STATE.council.day) {
+        showToast('No active council', 'error');
+        return;
+      }
+      if (SELECTED_COUNCIL.length === 0) {
+        showToast('Pick at least one member', 'error');
+        return;
+      }
+      if (!confirm('Submit your council votes? You can still change them while voting is open.')) return;
+
+      const status = document.getElementById('councilStatus');
+      status.textContent = 'Saving…';
+      status.className = 'vote-status';
+
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Vote recorded', 'success');
+          pollState();
+        })
+        .withFailureHandler(function(err) {
+          status.textContent = err.message || 'Save failed';
+          status.className = 'vote-status error';
+          showToast(err.message || 'Save failed', 'error');
+        })
+        .submitCouncilVotes(STATE.council.day, SELECTED_COUNCIL);
+    }
+
+    function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return false;
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function() {
+          input.value = '';
+          btn.disabled = false;
+          input.focus();
+          pollState();
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          showToast(err.message || 'Send failed', 'error');
+        })
+        .postTribeChatMessage(text);
+      return false;
+    }
+
+    function handleConfessionalSubmit(e) {
+      e.preventDefault();
+      const ta = document.getElementById('confessionalText');
+      const status = document.getElementById('confessionalStatus');
+      const text = ta.value.trim();
+      if (!text) { showToast('Confessional cannot be empty', 'error'); return false; }
+      if (text.length > 200) { showToast('Confessional too long', 'error'); return false; }
+
+      status.textContent = 'Submitting…';
+      status.className = 'vote-status';
+
+      google.script.run
+        .withSuccessHandler(function() {
+          ta.value = '';
+          updateCharCount();
+          status.textContent = 'Confessional submitted';
+          status.className = 'vote-status success';
+          showToast('Confessional submitted', 'success');
+          setTimeout(function() { status.textContent = ''; }, 3000);
+        })
+        .withFailureHandler(function(err) {
+          status.textContent = err.message || 'Failed';
+          status.className = 'vote-status error';
+          showToast(err.message || 'Failed', 'error');
+        })
+        .submitConfessional(text);
+      return false;
+    }
+
+    function updateCharCount() {
+      const ta = document.getElementById('confessionalText');
+      const counter = document.getElementById('charCount');
+      if (!ta || !counter) return;
+      const len = ta.value.length;
+      counter.textContent = len + ' / 200';
+      counter.classList.toggle('over', len > 200);
+    }
+
+    function handleIdolSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('idolInput');
+      const status = document.getElementById('idolStatus');
+      const word = input.value.trim();
+      if (!word) {
+        status.textContent = 'Enter the word first.';
+        status.className = 'vote-status error';
+        return false;
+      }
+      status.textContent = 'Checking…';
+      status.className = 'vote-status';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          status.innerHTML = '✦ ' + escapeHtmlT(res.message || 'Claimed!') + ' Your tribe is shielded.';
+          status.className = 'vote-status success';
+          input.value = '';
+          showToast((res.idol_name || 'IDOL').toUpperCase() + ' IS YOURS', 'success');
+          pollState();
+        })
+        .withFailureHandler(function(err) {
+          status.textContent = err.message || 'Failed.';
+          status.className = 'vote-status error';
+        })
+        .claimIdol(word);
+      return false;
+    }
+
+    function escapeHtmlT(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // ====================================================================
+    // UTILITIES
+    // ====================================================================
+    // ====================================================================
+    // ESCAPE ROOM (Phase 5)
+    // ====================================================================
+    let ER_STATE = null;
+    let ER_COOLDOWN_TIMER = null;
+    let ER_UNLOCK_TIMER = null;
+
+    function renderEscapeRoom(state) {
+      const section = document.getElementById('escapeRoomSection');
+      if (!section) return;
+
+      // Only show on Thursday — and only if user is on a tribe (jury still see read-only)
+      const isThursday = state && state.currentDay === 'thu';
+      if (!isThursday) {
+        section.style.display = 'none';
+        ER_STATE = null;
+        clearTimers();
+        return;
+      }
+      section.style.display = 'block';
+
+      // Fetch escape room state separately (it's its own endpoint)
+      google.script.run
+        .withSuccessHandler(onEscapeRoomLoaded)
+        .withFailureHandler(function(err) {
+          document.getElementById('escapeRoomBody').innerHTML =
+            '<div class="er-waiting"><div class="heading">Escape Room Unavailable</div>' +
+            '<div class="detail">' + escapeHtmlT(err.message || String(err)) + '</div></div>';
+        })
+        .getEscapeRoomState();
+    }
+
+    function onEscapeRoomLoaded(state) {
+      ER_STATE = state;
+      renderProgress(state);
+      renderActiveClue(state);
+    }
+
+    function renderProgress(state) {
+      const wrap = document.getElementById('escapeRoomProgress');
+      if (!wrap) return;
+      wrap.style.setProperty('--er-clue-count', state.total_clues || 4);
+      wrap.innerHTML = '';
+
+      (state.clues || []).forEach(function(clue) {
+        const step = document.createElement('div');
+        const classes = ['er-progress-step'];
+
+        const isCurrent = state.currentClue && state.currentClue.clue_number === clue.clue_number;
+        const isLocked = !clue.solved && !isCurrent;
+
+        if (clue.solved) classes.push('solved');
+        else if (isCurrent) classes.push('active');
+        else classes.push('locked');
+
+        step.className = classes.join(' ');
+
+        const icon = document.createElement('div');
+        icon.className = 'er-step-icon';
+        icon.textContent = clue.solved ? '✓' : (isCurrent ? '✦' : '◯');
+        step.appendChild(icon);
+
+        const num = document.createElement('div');
+        num.className = 'er-step-num';
+        num.textContent = 'Clue ' + clue.clue_number;
+        step.appendChild(num);
+
+        const title = document.createElement('div');
+        title.className = 'er-step-title';
+        title.textContent = clue.title || ('Clue ' + clue.clue_number);
+        step.appendChild(title);
+
+        const stateLine = document.createElement('div');
+        stateLine.className = 'er-step-state';
+        if (clue.solved) {
+          stateLine.textContent = 'Solved · ' + formatChatTime(clue.solved_at);
+        } else if (isCurrent) {
+          stateLine.textContent = 'Active now';
+        } else if (clue.released) {
+          stateLine.textContent = 'Awaiting prior clue';
+        } else if (clue.release_time) {
+          stateLine.textContent = 'Unlocks ' + formatLocalShort(clue.release_time);
+        } else {
+          stateLine.textContent = 'Locked';
+        }
+        step.appendChild(stateLine);
+
+        wrap.appendChild(step);
+      });
+    }
+
+    function renderActiveClue(state) {
+      const body = document.getElementById('escapeRoomBody');
+      if (!body) return;
+      body.innerHTML = '';
+      clearTimers();
+
+      // Finished state
+      if (state.finishedAt) {
+        const wrap = document.createElement('div');
+        wrap.className = 'er-finished';
+        wrap.innerHTML =
+          '<div class="icon">✦</div>' +
+          '<div class="heading">All clues solved</div>' +
+          '<div class="time">Finished at ' + escapeHtmlT(formatChatTime(state.finishedAt)) + '</div>' +
+          '<div class="detail">Final placement is determined by finishing order across all tribes. Sit tight — results post when the day wraps.</div>';
+        body.appendChild(wrap);
+        return;
+      }
+
+      // Waiting for next clue to unlock (prerequisite solved, but release time hasn't hit)
+      if (!state.currentClue && state.nextUnlockTime) {
+        renderWaitingState(body, state.nextUnlockTime);
+        return;
+      }
+
+      // No active clue and no upcoming — pre-event state
+      if (!state.currentClue) {
+        const wrap = document.createElement('div');
+        wrap.className = 'er-waiting';
+        wrap.innerHTML =
+          '<div class="icon">✦</div>' +
+          '<div class="heading">Awaiting first clue</div>' +
+          '<div class="detail">The first clue unlocks at the scheduled time. Stay close.</div>';
+        body.appendChild(wrap);
+        return;
+      }
+
+      // Active clue
+      const c = state.currentClue;
+      const wrap = document.createElement('div');
+      wrap.className = 'er-active-clue';
+
+      const head = document.createElement('div');
+      head.className = 'er-clue-header';
+      const num = document.createElement('span');
+      num.className = 'er-clue-number';
+      num.textContent = 'Clue ' + c.clue_number + ' of ' + c.total;
+      const title = document.createElement('h3');
+      title.className = 'er-clue-title';
+      title.textContent = c.title || '';
+      head.appendChild(num);
+      head.appendChild(title);
+      wrap.appendChild(head);
+
+      // Riddle text (preserve newlines)
+      const riddle = document.createElement('div');
+      riddle.className = 'er-clue-riddle';
+      riddle.textContent = c.riddle_text || '';
+      wrap.appendChild(riddle);
+
+      // Optional image
+      if (c.image_url) {
+        const img = document.createElement('img');
+        img.className = 'er-clue-image';
+        img.src = c.image_url;
+        img.alt = 'Clue ' + c.clue_number + ' image';
+        wrap.appendChild(img);
+      }
+
+      // Input
+      const inputRow = document.createElement('div');
+      inputRow.className = 'er-input-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'erAttemptInput';
+      input.placeholder = 'Enter the answer…';
+      input.autocomplete = 'off';
+      input.maxLength = 80;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'erSubmitBtn';
+      btn.dataset.action = 'submit-er-attempt';
+      btn.textContent = 'Submit Answer';
+
+      // If on jury, disable
+      if (STATE && STATE.me && STATE.me.status === 'jury') {
+        input.disabled = true;
+        input.placeholder = 'Jury cannot submit answers.';
+        btn.disabled = true;
+      }
+
+      inputRow.appendChild(input);
+      inputRow.appendChild(btn);
+      wrap.appendChild(inputRow);
+
+      // Feedback area
+      const feedback = document.createElement('div');
+      feedback.id = 'erFeedback';
+      feedback.className = 'er-feedback';
+      wrap.appendChild(feedback);
+
+      body.appendChild(wrap);
+
+      // Allow Enter to submit
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitErAttempt();
+        }
+      });
+
+      // If a cooldown is active, start the visual timer
+      if (state.cooldownUntil) {
+        startCooldownTimer(state.cooldownUntil);
+      }
+
+      input.focus();
+    }
+
+    function renderWaitingState(container, unlockIso) {
+      const wrap = document.createElement('div');
+      wrap.className = 'er-waiting';
+      wrap.innerHTML =
+        '<span class="icon">⏱</span>' +
+        '<div class="heading">Next clue locked</div>' +
+        '<div class="countdown" id="erUnlockCountdown">—</div>' +
+        '<div class="detail">Unlocks at ' + escapeHtmlT(formatLocalShort(unlockIso)) + '. The page will refresh automatically.</div>';
+      container.appendChild(wrap);
+      startUnlockCountdown(unlockIso);
+    }
+
+    function startCooldownTimer(untilIso) {
+      clearInterval(ER_COOLDOWN_TIMER);
+      const until = new Date(untilIso).getTime();
+      const input = document.getElementById('erAttemptInput');
+      const btn = document.getElementById('erSubmitBtn');
+      const feedback = document.getElementById('erFeedback');
+
+      function tick() {
+        const remaining = Math.ceil((until - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(ER_COOLDOWN_TIMER);
+          if (input) { input.disabled = false; input.focus(); }
+          if (btn) { btn.disabled = false; btn.textContent = 'Submit Answer'; }
+          if (feedback) feedback.className = 'er-feedback';
+          return;
+        }
+        if (input) input.disabled = true;
+        if (btn) { btn.disabled = true; btn.textContent = 'Wait ' + remaining + 's'; }
+      }
+      tick();
+      ER_COOLDOWN_TIMER = setInterval(tick, 250);
+    }
+
+    function startUnlockCountdown(unlockIso) {
+      clearInterval(ER_UNLOCK_TIMER);
+      const until = new Date(unlockIso).getTime();
+      const cd = document.getElementById('erUnlockCountdown');
+
+      function tick() {
+        const ms = until - Date.now();
+        if (ms <= 0) {
+          clearInterval(ER_UNLOCK_TIMER);
+          if (cd) cd.textContent = 'Unlocked!';
+          // Trigger fresh load
+          renderEscapeRoom(STATE);
+          return;
+        }
+        const totalSec = Math.floor(ms / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        const pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+        if (cd) cd.textContent = pad(m) + ':' + pad(s);
+      }
+      tick();
+      ER_UNLOCK_TIMER = setInterval(tick, 500);
+    }
+
+    function clearTimers() {
+      if (ER_COOLDOWN_TIMER) { clearInterval(ER_COOLDOWN_TIMER); ER_COOLDOWN_TIMER = null; }
+      if (ER_UNLOCK_TIMER)   { clearInterval(ER_UNLOCK_TIMER);   ER_UNLOCK_TIMER = null; }
+    }
+
+    function submitErAttempt() {
+      const input = document.getElementById('erAttemptInput');
+      const btn = document.getElementById('erSubmitBtn');
+      if (!input || !ER_STATE || !ER_STATE.currentClue) return;
+      const attempt = input.value.trim();
+      if (!attempt) {
+        showSmallFeedback('wrong', 'Enter an answer.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Checking…';
+      input.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res.correct) {
+            showCorrectOverlay(res.message || 'You got it.', !!res.finished);
+            // Hold the celebration for ~1.6s then reload to advance
+            setTimeout(function() {
+              if (STATE) renderEscapeRoom(STATE);
+            }, 1600);
+          } else {
+            // Wrong answer
+            if (res.cooldownUntil) {
+              showWrongOverlay(res.message || 'Not the right answer.', res.cooldownUntil);
+            } else {
+              showSmallFeedback('wrong', res.message || 'Not quite.');
+              btn.disabled = false;
+              btn.textContent = 'Submit Answer';
+              input.disabled = false;
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          showSmallFeedback('wrong', err.message || 'Submission failed.');
+          btn.disabled = false;
+          btn.textContent = 'Submit Answer';
+          input.disabled = false;
+        })
+        .submitClueAttempt(ER_STATE.currentClue.clue_number, attempt);
+    }
+
+    function showCorrectOverlay(message, isFinal) {
+      const body = document.getElementById('escapeRoomBody');
+      if (!body) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'er-result-overlay correct';
+      overlay.innerHTML =
+        '<div class="er-result-icon">✓</div>' +
+        '<div class="er-result-headline">' + (isFinal ? 'Escape Room Complete' : 'Correct!') + '</div>' +
+        '<div class="er-result-detail">' + escapeHtmlT(message) + '</div>';
+      // Replace the active clue card with the overlay
+      const activeCard = body.querySelector('.er-active-clue');
+      if (activeCard) {
+        activeCard.replaceWith(overlay);
+      } else {
+        body.appendChild(overlay);
+      }
+    }
+
+    function showWrongOverlay(message, untilIso) {
+      const body = document.getElementById('escapeRoomBody');
+      if (!body) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'er-result-overlay wrong';
+      overlay.innerHTML =
+        '<div class="er-result-icon">✗</div>' +
+        '<div class="er-result-headline">Not Quite</div>' +
+        '<div class="er-result-detail">' + escapeHtmlT(message) + '</div>' +
+        '<div class="er-cooldown-bigtimer" id="erBigCooldown">30</div>' +
+        '<div class="er-cooldown-label">Seconds Until Retry</div>';
+      const activeCard = body.querySelector('.er-active-clue');
+      if (activeCard) {
+        activeCard.replaceWith(overlay);
+      } else {
+        body.appendChild(overlay);
+      }
+      // Start the big countdown
+      startBigCooldown(untilIso);
+    }
+
+    function startBigCooldown(untilIso) {
+      clearInterval(ER_COOLDOWN_TIMER);
+      const until = new Date(untilIso).getTime();
+      const bigCd = document.getElementById('erBigCooldown');
+
+      function tick() {
+        const remaining = Math.ceil((until - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(ER_COOLDOWN_TIMER);
+          // Re-render the active clue
+          if (STATE) renderEscapeRoom(STATE);
+          return;
+        }
+        if (bigCd) bigCd.textContent = remaining;
+      }
+      tick();
+      ER_COOLDOWN_TIMER = setInterval(tick, 250);
+    }
+
+    // Keep small inline feedback for things like "Enter an answer" — used outside the dramatic overlay
+    function showSmallFeedback(kind, msg) {
+      const fb = document.getElementById('erFeedback');
+      if (!fb) return;
+      fb.textContent = msg;
+      fb.className = 'er-feedback show ' + kind;
+      // Auto-hide after 4 seconds
+      clearTimeout(fb._hide);
+      fb._hide = setTimeout(function() {
+        fb.className = 'er-feedback';
+      }, 4000);
+    }
+
+    // The startCooldownTimer below is preserved for the case where the page loads
+    // already-mid-cooldown (rare but possible if you refresh during cooldown).
+    function startCooldownTimer(untilIso) {
+      const body = document.getElementById('escapeRoomBody');
+      if (!body) return;
+      // If we land on the page mid-cooldown, render the wrong overlay state directly
+      showWrongOverlay('Cooldown still active.', untilIso);
+    }
+
+    function formatLocalShort(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      } catch (e) { return iso; }
+    }
+
+    function showToast(msg, kind) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (kind ? (' ' + kind) : '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.className = 'toast'; }, 2400);
+    }
+
+    function showFatal(err) {
+      document.getElementById('bannerName').textContent = 'Connection Failed';
+      document.getElementById('bannerEyebrow').textContent = (err && err.message) ? err.message : String(err);
+    }
+  </script>
+</body>
+</html>
