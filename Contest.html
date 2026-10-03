@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Styles') ?>
+  <style>
+    /* =========================================================================
+       PHASE 2 — CONTEST DASHBOARD
+       Aesthetic: expedition broadcast. Dramatic asymmetric grid with the
+       leading tribe scaled larger. State-aware hero. Live polling + count-ups.
+       ========================================================================= */
+
+    /* ---------- HERO ---------- */
+    .contest-hero {
+      text-align: center;
+      padding: clamp(3rem, 7vw, 5rem) 0 clamp(2rem, 4vw, 3rem);
+      position: relative;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.42em;
+      font-size: clamp(0.78rem, 1.1vw, 0.95rem);
+      color: var(--ember);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero-headline {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(3rem, 7vw, 6rem);
+      line-height: 0.95;
+      letter-spacing: 0.06em;
+      color: var(--parchment);
+      margin: 0;
+      text-transform: uppercase;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .hero-icon {
+      font-size: clamp(2rem, 3.5vw, 3.5rem);
+      color: var(--ember);
+      display: block;
+      margin-bottom: 0.6rem;
+      animation: flicker 3.4s ease-in-out infinite;
+    }
+    .hero-subline {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: clamp(1rem, 1.4vw, 1.2rem);
+      color: var(--ink-cream-soft);
+      margin-top: 1rem;
+      letter-spacing: 0.04em;
+    }
+    .hero-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 1.2rem;
+      padding: 0.5rem 1.2rem;
+      border: 1px solid var(--ember);
+      color: var(--ember);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      border-radius: 999px;
+    }
+    .hero-status-pill .live-dot {
+      width: 10px; height: 10px;
+      background: var(--ember);
+      border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(226, 114, 63, 0.6); }
+      50%      { opacity: 0.6; box-shadow: 0 0 0 8px rgba(226, 114, 63, 0); }
+    }
+
+    /* ---------- LEADERBOARD ---------- */
+    .leaderboard-eyebrow {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+      margin-bottom: 0.4rem;
+    }
+    .leaderboard-title {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: clamp(1.3rem, 2vw, 1.7rem);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0 0 2rem;
+    }
+    .leaderboard-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1rem;
+    }
+    /* Leader card spans the left column, full height */
+    .tribe-card.rank-1 {
+      grid-row: 1 / 3;
+      min-height: 280px;
+    }
+
+    .tribe-card {
+      position: relative;
+      padding: 1.4rem 1.4rem 1.2rem;
+      border: 1px solid rgba(232, 221, 196, 0.12);
+      background:
+        linear-gradient(180deg, rgba(232, 221, 196, 0.04), rgba(232, 221, 196, 0.01)),
+        rgba(15, 24, 20, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      overflow: hidden;
+      transition: transform 300ms var(--ease-stage), border-color 300ms var(--ease-stage);
+    }
+    .tribe-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--tribe-color, var(--ember));
+    }
+    .tribe-card.rank-1 {
+      border-color: rgba(226, 114, 63, 0.3);
+      background:
+        linear-gradient(180deg, rgba(226, 114, 63, 0.06), rgba(232, 221, 196, 0.01)),
+        rgba(15, 24, 20, 0.7);
+    }
+    .tribe-card.rank-1::before {
+      width: 6px;
+      box-shadow: 0 0 20px var(--tribe-color);
+    }
+    .tribe-card.dissolved {
+      opacity: 0.45;
+      filter: grayscale(0.7);
+    }
+
+    .tribe-card-rank {
+      position: absolute;
+      top: 0.7rem; right: 1rem;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.5rem, 4vw, 3.8rem);
+      color: rgba(232, 221, 196, 0.07);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      pointer-events: none;
+    }
+    .tribe-card.rank-1 .tribe-card-rank {
+      color: rgba(226, 114, 63, 0.18);
+      font-size: clamp(4rem, 6.5vw, 6.5rem);
+    }
+    .tribe-card-flag {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.8rem;
+      position: relative;
+    }
+    .tribe-card-flag .swatch {
+      width: 28px; height: 28px;
+      background: var(--tribe-color);
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4) inset, 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .tribe-card.rank-1 .tribe-card-flag .swatch {
+      width: 36px; height: 36px;
+    }
+    .tribe-card-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+    }
+    .tribe-card.rank-1 .tribe-card-name {
+      font-size: clamp(1.4rem, 1.8vw, 1.7rem);
+    }
+
+    .tribe-card-points {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.4rem, 4vw, 3.5rem);
+      color: var(--parchment);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .tribe-card.rank-1 .tribe-card-points {
+      font-size: clamp(4.5rem, 7vw, 7rem);
+    }
+    .tribe-card-points-label {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+      margin-top: 0.2rem;
+    }
+
+    .tribe-card-meta {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1.2rem;
+      font-size: 0.95rem;
+      color: var(--ink-cream-soft);
+      letter-spacing: 0.04em;
+    }
+    .tribe-card-meta .torches {
+      font-family: var(--font-display);
+      letter-spacing: 0.06em;
+    }
+    .tribe-card-meta .live-dot {
+      color: var(--jade);
+      font-size: 0.7rem;
+    }
+    .tribe-card-meta .gone {
+      color: var(--ink-faded);
+      font-size: 0.7rem;
+    }
+
+    /* Crown / wreath on rank 1 */
+    .leader-mark {
+      position: absolute;
+      top: 0.8rem; left: 1.2rem;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      color: var(--ember);
+      text-transform: uppercase;
+    }
+
+    /* ---------- BOTTOM PANELS ---------- */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 800px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+      .leaderboard-grid { grid-template-columns: 1fr 1fr; }
+      .tribe-card.rank-1 { grid-column: 1 / -1; grid-row: 1 / 2; }
+    }
+
+    .panel {
+      padding: 1.4rem 1.6rem;
+      border: 1px solid rgba(232, 221, 196, 0.12);
+      background: rgba(15, 24, 20, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .panel-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+      margin-bottom: 0.4rem;
+    }
+    .panel-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      margin: 0 0 1rem;
+    }
+    .panel-icon {
+      color: var(--ember);
+      margin-right: 0.5rem;
+    }
+
+    .today-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 1.1rem;
+      border: 1px solid rgba(232, 221, 196, 0.2);
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-cream);
+    }
+    .today-status.in_progress { border-color: var(--ember); color: var(--ember); }
+    .today-status.in_progress::before {
+      content: ''; width: 8px; height: 8px;
+      background: var(--ember); border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .today-status.complete { border-color: var(--jade); color: var(--jade); }
+    .today-status.voting { border-color: var(--rh-purple); color: #B89AD8; }
+    .today-status.pending { color: var(--ink-cream-soft); }
+
+    .yesterday-winner {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.7rem 1rem;
+      background: rgba(226, 114, 63, 0.08);
+      border-left: 3px solid;
+      margin-bottom: 1rem;
+    }
+    .yesterday-winner .label {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+      margin-right: auto;
+    }
+    .yesterday-winner .name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      font-size: 1.15rem;
+    }
+
+    .torches-snuffed {
+      margin-top: 1rem;
+    }
+    .torches-snuffed .heading {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--parchment-dark);
+      margin-bottom: 0.6rem;
+    }
+    .torch-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.55rem 0;
+      color: var(--ink-cream-soft);
+      font-size: 1.05rem;
+    }
+    .torch-row .torch {
+      color: var(--ink-faded);
+      font-size: 1.3rem;
+    }
+    .torch-row .name {
+      font-family: var(--font-body);
+      font-weight: 500;
+      color: var(--parchment);
+    }
+    .torch-row .tribe {
+      margin-left: auto;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .empty-state {
+      color: var(--ink-faded);
+      font-style: italic;
+      padding: 1rem 0;
+      font-size: 1rem;
+    }
+
+    /* ---------- BROADCAST MODE (TV) ---------- */
+    /* ============== BROADCAST MODE (TV-friendly) ============== */
+    body.broadcast { font-size: 22px; }
+    body.broadcast .top-bar { display: none; }
+    body.broadcast .hero-headline { font-size: clamp(5rem, 9vw, 9rem); }
+    body.broadcast .hero-subline { font-size: clamp(1.4rem, 1.8vw, 2rem); }
+    body.broadcast .tribe-card-points { font-size: clamp(3.5rem, 5vw, 5rem); }
+    body.broadcast .tribe-card.rank-1 .tribe-card-points { font-size: clamp(6rem, 9vw, 9rem); }
+    body.broadcast .tribe-card-name { font-size: clamp(1.4rem, 2vw, 2.2rem); }
+    body.broadcast .panel-title { font-size: clamp(2rem, 3vw, 2.6rem); }
+    body.broadcast .panel-eyebrow { font-size: 1.05rem; letter-spacing: 0.28em; }
+    body.broadcast .shell { max-width: 2000px; padding: 0.5rem clamp(1rem, 2vw, 2rem); }
+    body.broadcast .foot { display: none; }
+    body.broadcast .admin-sim-trigger { display: none !important; }
+    body.broadcast .tribe-card-meta { font-size: 1.15rem; }
+    body.broadcast .torch-row { font-size: 1.25rem; }
+    body.broadcast .torch-row .name { font-size: 1.3rem; }
+    body.broadcast .yesterday-winner .name { font-size: 1.5rem; }
+    body.broadcast .today-status { font-size: 1.05rem; padding: 0.65rem 1.4rem; }
+
+    /* ============== CONFESSIONAL TICKER ============== */
+    .ticker-bar {
+      position: relative;
+      margin-top: 1.5rem;
+      padding: 0.7rem 0;
+      background: linear-gradient(90deg, transparent, rgba(15, 24, 20, 0.5), transparent);
+      border-top: 1px solid rgba(232, 221, 196, 0.08);
+      border-bottom: 1px solid rgba(232, 221, 196, 0.08);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    body.broadcast .ticker-bar {
+      padding: 1.1rem 0;
+      margin-top: 2rem;
+    }
+    .ticker-bar::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 80px;
+      background: linear-gradient(90deg, var(--bg-base) 0%, transparent 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .ticker-bar::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 80px;
+      background: linear-gradient(-90deg, var(--bg-base) 0%, transparent 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .ticker-track {
+      display: inline-block;
+      padding-left: 100%;
+      animation: tickerScroll 90s linear infinite;
+    }
+    body.broadcast .ticker-track { animation-duration: 120s; }
+    @keyframes tickerScroll {
+      0%   { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
+    .ticker-bar:hover .ticker-track { animation-play-state: paused; }
+    .ticker-quote {
+      display: inline-block;
+      padding: 0 2.5rem;
+      font-family: var(--font-body);
+      font-size: 1.15rem;
+      font-style: italic;
+      color: var(--ink-cream);
+      letter-spacing: 0.01em;
+    }
+    body.broadcast .ticker-quote { font-size: 1.5rem; }
+    .ticker-quote .speaker {
+      font-family: var(--font-display);
+      font-style: normal;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.92em;
+      margin-right: 0.7rem;
+    }
+    .ticker-quote .speaker::after {
+      content: ' · ';
+      color: var(--ink-faded);
+      margin: 0 0.2em;
+    }
+    .ticker-quote::before {
+      content: '"';
+      color: var(--ember);
+      font-size: 1.5em;
+      vertical-align: -0.15em;
+      margin-right: 0.1em;
+    }
+    .ticker-quote::after {
+      content: '"';
+      color: var(--ember);
+      font-size: 1.5em;
+      vertical-align: -0.15em;
+      margin-left: 0.1em;
+    }
+    .ticker-empty {
+      text-align: center;
+      color: var(--ink-faded);
+      font-style: italic;
+      padding: 0.5rem 0;
+      font-size: 1.05rem;
+    }
+
+    /* ============== RECAP PANEL (Phase 7.5) ============== */
+    .recap-panel {
+      margin-top: 1.5rem;
+      padding: clamp(1.4rem, 2.5vw, 2rem);
+      background:
+        linear-gradient(180deg, rgba(93, 59, 133, 0.10), transparent),
+        rgba(15, 24, 20, 0.55);
+      border: 1px solid rgba(93, 59, 133, 0.25);
+      border-left: 4px solid var(--rh-purple);
+    }
+    body.broadcast .recap-panel {
+      padding: 2rem 2.5rem;
+    }
+    .recap-panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .recap-replay-btn {
+      padding: 0.7rem 1.3rem;
+      background: transparent;
+      border: 1px solid var(--rh-purple);
+      color: #B89AD8;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 150ms var(--ease-snap);
+    }
+    .recap-replay-btn:hover {
+      background: var(--rh-purple);
+      color: var(--parchment);
+    }
+    body.broadcast .recap-replay-btn { display: none; }
+
+    .recap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .recap-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.9rem 1.1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid;
+    }
+    .recap-item.idol_claimed { border-left-color: var(--ember); }
+    .recap-item.council_reveal { border-left-color: var(--blood); }
+    .recap-item.tribe_merge { border-left-color: var(--rh-purple); }
+
+    .recap-item-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 48px;
+      text-align: center;
+    }
+    body.broadcast .recap-item-icon { font-size: 2.4rem; width: 64px; }
+    .recap-item.idol_claimed .recap-item-icon { color: var(--ember); }
+    .recap-item.council_reveal .recap-item-icon { color: #E58D88; }
+    .recap-item.tribe_merge .recap-item-icon { color: #B89AD8; }
+
+    .recap-item-body { flex: 1; min-width: 0; }
+    .recap-item-eyebrow {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-cream-soft);
+      margin-bottom: 0.2rem;
+    }
+    body.broadcast .recap-item-eyebrow { font-size: 0.88rem; }
+    .recap-item-headline {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 0.04em;
+      color: var(--parchment);
+      margin-bottom: 0.35rem;
+    }
+    body.broadcast .recap-item-headline { font-size: 1.6rem; }
+    .recap-item-detail {
+      color: var(--ink-cream-soft);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    body.broadcast .recap-item-detail { font-size: 1.15rem; }
+    .recap-item-time {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      color: var(--ink-faded);
+      font-variant-numeric: tabular-nums;
+      margin-top: 0.3rem;
+    }
+
+    /* ============== CEREMONY OVERLAY ============== */
+    .ceremony-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 5, 12, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+      animation: ceremonyFadeIn 600ms var(--ease-stage);
+    }
+    @keyframes ceremonyFadeIn {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    .ceremony-overlay.fading-out {
+      animation: ceremonyFadeOut 800ms var(--ease-stage) forwards;
+    }
+    @keyframes ceremonyFadeOut {
+      0%   { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .ceremony-eyebrow {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--ember);
+      margin-bottom: 1.5rem;
+      animation: ceremonyDropIn 800ms var(--ease-stage) 200ms backwards;
+    }
+    .ceremony-headline {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      line-height: 1;
+      margin: 0 0 2rem;
+      max-width: 90vw;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+      animation: ceremonyHeadline 1100ms var(--ease-stage) 400ms backwards;
+    }
+    @keyframes ceremonyHeadline {
+      0%   { opacity: 0; transform: scale(0.85); }
+      60%  { opacity: 1; transform: scale(1.04); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes ceremonyDropIn {
+      0%   { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .ceremony-detail {
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2.4vw, 2rem);
+      letter-spacing: 0.06em;
+      color: var(--ink-cream);
+      max-width: 70ch;
+      animation: ceremonyDropIn 800ms var(--ease-stage) 800ms backwards;
+    }
+    .ceremony-names {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 2rem 0;
+      align-items: center;
+    }
+    .ceremony-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      animation: ceremonyDropIn 700ms var(--ease-stage) backwards;
+    }
+    .ceremony-name:nth-child(1) { animation-delay: 1000ms; }
+    .ceremony-name:nth-child(2) { animation-delay: 1500ms; }
+    .ceremony-name:nth-child(3) { animation-delay: 2000ms; }
+    .ceremony-name:nth-child(4) { animation-delay: 2500ms; }
+
+    /* Idol-specific lightning flash */
+    .ceremony-overlay.idol_claimed {
+      background:
+        radial-gradient(ellipse at center, rgba(226, 114, 63, 0.3), transparent 50%),
+        rgba(8, 5, 12, 0.94);
+    }
+    .ceremony-overlay.idol_claimed::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.85);
+      animation: lightningFlash 280ms ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes lightningFlash {
+      0%   { opacity: 0; }
+      10%  { opacity: 1; }
+      30%  { opacity: 0.2; }
+      40%  { opacity: 0.95; }
+      100% { opacity: 0; }
+    }
+    .ceremony-overlay.idol_claimed .ceremony-icon {
+      font-size: clamp(4rem, 9vw, 8rem);
+      color: var(--ember);
+      margin-bottom: 1.4rem;
+      filter: drop-shadow(0 0 30px rgba(226, 114, 63, 0.6));
+      animation: ceremonyHeadline 1000ms var(--ease-stage) 350ms backwards;
+    }
+
+    /* Council-specific dark vignette */
+    .ceremony-overlay.council_reveal {
+      background:
+        radial-gradient(ellipse at center, rgba(139, 45, 41, 0.25), transparent 60%),
+        rgba(8, 5, 12, 0.97);
+    }
+    .ceremony-overlay.council_reveal .ceremony-eyebrow { color: #B89AD8; }
+
+    /* Merge-specific blended ribbon */
+    .ceremony-overlay.tribe_merge {
+      background:
+        linear-gradient(135deg, rgba(8,5,12,0.95) 0%, rgba(8,5,12,0.85) 100%);
+    }
+    .ceremony-merge-tribes {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 2rem 0;
+      animation: ceremonyDropIn 800ms var(--ease-stage) 1000ms backwards;
+    }
+    .ceremony-merge-tribe-pill {
+      padding: 0.7rem 1.6rem;
+      border: 2px solid;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.1rem, 2vw, 1.6rem);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .ceremony-merge-arrow {
+      font-size: clamp(1.5rem, 3vw, 2.4rem);
+      color: var(--ember);
+    }
+
+    .ceremony-dismiss-hint {
+      position: absolute;
+      bottom: 2rem;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+      animation: ceremonyDropIn 800ms ease 4500ms backwards;
+    }
+    body.broadcast .ceremony-dismiss-hint { display: none; }
+
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 0.85rem 1.4rem;
+      background: var(--ink);
+      color: var(--parchment);
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      box-shadow: var(--shadow-deep);
+      z-index: 1000;
+      transition: transform 300ms var(--ease-stage);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #2D5C3D; }
+    .toast.error { background: var(--blood); }
+  </style>
+</head>
+<body>
+  <?!= include('Header', {userEmail: userEmail, userRole: userRole, scriptUrl: scriptUrl, pageView: pageView}) ?>
+
+  <main class="shell">
+    <section class="contest-hero">
+      <span id="heroIcon" class="hero-icon" style="display:none;"></span>
+      <div id="heroEyebrow" class="hero-eyebrow">Loading…</div>
+      <h1 id="heroHeadline" class="hero-headline">Roy-Hart Survivor</h1>
+      <p id="heroSubline" class="hero-subline"></p>
+      <div id="heroStatus" class="hero-status-pill" style="display:none;">
+        <span class="live-dot"></span><span id="heroStatusText">LIVE</span>
+      </div>
+    </section>
+
+    <!-- Confessional ticker (Phase 7) -->
+    <div class="ticker-bar" id="tickerBar">
+      <div class="ticker-track" id="tickerTrack">
+        <span class="ticker-empty">Confessionals appear here as castaways speak to the camera…</span>
+      </div>
+    </div>
+
+    <section style="margin-top: 1rem;">
+      <div class="leaderboard-eyebrow">The Standings</div>
+      <h2 class="leaderboard-title">Tribal Leaderboard</h2>
+      <div id="leaderboard" class="leaderboard-grid">
+        <!-- populated by JS -->
+      </div>
+    </section>
+
+    <!-- Recap Panel — always visible summary of recent ceremonies (Phase 7.5) -->
+    <section id="recapPanel" class="recap-panel" style="display:none;">
+      <div class="recap-panel-head">
+        <div>
+          <div class="panel-eyebrow">The Story So Far</div>
+          <h2 class="panel-title">Recent Drama</h2>
+        </div>
+        <button class="recap-replay-btn" data-action="replay-ceremonies">▶ Watch Highlights</button>
+      </div>
+      <div id="recapList" class="recap-list"></div>
+    </section>
+
+    <section class="bottom-grid">
+      <div class="panel">
+        <div class="panel-eyebrow">Today's Challenge</div>
+        <h3 id="todayTitle" class="panel-title">—</h3>
+        <div id="todayBody"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-eyebrow">Yesterday's Council</div>
+        <h3 id="yesterdayTitle" class="panel-title">—</h3>
+        <div id="yesterdayBody"></div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="ornament">✦ ✦ ✦</div>
+      Roy-Hart Middle School · Survivor Week · v0.3 (Phase 2 — Live Dashboard)
+    </footer>
+  </main>
+
+  <div id="toast" class="toast"></div></div>
+
+  <!-- Ceremony overlay (Phase 7) — populated by JS when an event fires -->
+  <div id="ceremonyOverlay"></div>
+
+  <script>
+    // No template scriptlets in this script — all data via google.script.run.
+
+    // ---- runtime state ----
+    let TRIBES_DATA = [];
+    let TRIBE_BY_ID = {};
+    let LATEST_STATE = null;
+    let DISPLAYED_POINTS = {}; // for count-up animations
+    let POLL_TIMER = null;
+    let IS_ADMIN = false;
+    let IS_BROADCAST = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Detect TV/broadcast mode from URL ?tv=1
+      const url = new URL(window.location.href);
+      IS_BROADCAST = url.searchParams.get('tv') === '1';
+      if (IS_BROADCAST) document.body.classList.add('broadcast');
+
+      document.addEventListener('click', handleClick);
+
+      google.script.run
+        .withSuccessHandler(onTribesLoaded)
+        .withFailureHandler(showFatal)
+        .getTribes();
+
+      google.script.run
+        .withSuccessHandler(function(user) {
+          IS_ADMIN = user && user.role === 'admin';
+          // Sim Panel was removed in favor of the Admin Console tabs.
+          // The IS_ADMIN flag is still useful for any future admin-only
+          // affordances on the Contest dashboard. Guard the legacy element
+          // lookup so old browsers / cached HTML don't throw.
+          const legacySim = document.getElementById('adminSim');
+          if (IS_ADMIN && !IS_BROADCAST && legacySim) {
+            legacySim.style.display = 'block';
+          }
+        })
+        .getCurrentUser();
+    });
+
+    function onTribesLoaded(tribes) {
+      TRIBES_DATA = tribes || [];
+      TRIBE_BY_ID = {};
+      TRIBES_DATA.forEach(function(t) { TRIBE_BY_ID[t.id] = t; });
+
+      pollState();
+      pollTicker();
+      pollCeremonies();
+      POLL_TIMER = setInterval(pollState, 8000);
+      // Ticker refreshes less often (data isn't time-critical)
+      setInterval(pollTicker, 30000);
+      // Ceremonies poll faster so they trigger close to real time
+      setInterval(pollCeremonies, 4000);
+    }
+
+    function pollState() {
+      google.script.run
+        .withSuccessHandler(onStateLoaded)
+        .withFailureHandler(function(err) { /* silent fail; will retry */ })
+        .getContestState();
+    }
+
+    function pollTicker() {
+      google.script.run
+        .withSuccessHandler(renderTicker)
+        .withFailureHandler(function(err) { /* silent */ })
+        .getConfessionalsForTicker(50);
+    }
+
+    function pollCeremonies() {
+      google.script.run
+        .withSuccessHandler(handleCeremonies)
+        .withFailureHandler(function(err) { /* silent */ })
+        .getActiveCeremonies();
+    }
+
+    // =========================================================================
+    // RENDER
+    // =========================================================================
+    function onStateLoaded(state) {
+      LATEST_STATE = state;
+      renderHero(state);
+      renderLeaderboard(state.leaderboard, state.currentDay);
+      renderToday(state.today);
+      renderYesterday(state.yesterday);
+    }
+
+    function renderHero(state) {
+      const eyebrow = document.getElementById('heroEyebrow');
+      const headline = document.getElementById('heroHeadline');
+      const subline = document.getElementById('heroSubline');
+      const icon = document.getElementById('heroIcon');
+      const status = document.getElementById('heroStatus');
+      const statusText = document.getElementById('heroStatusText');
+
+      eyebrow.textContent = state.hero.eyebrow || '';
+      headline.textContent = state.hero.headline || '';
+
+      // Show day icon if present
+      if (state.hero.dayIcon) {
+        icon.textContent = state.hero.dayIcon;
+        icon.style.display = 'block';
+      } else {
+        icon.style.display = 'none';
+      }
+
+      // Subline: combine hero subline with today's status if active
+      let sublineText = state.hero.subline || '';
+      if (state.today && state.today.statusLabel) {
+        sublineText = state.today.statusLabel;
+      }
+      subline.textContent = sublineText;
+
+      // Live pill: show if challenge is in progress
+      if (state.today && state.today.status === 'in_progress') {
+        status.style.display = 'inline-flex';
+        statusText.textContent = 'Live · ' + state.today.name;
+      } else if (state.today && state.today.status === 'voting') {
+        status.style.display = 'inline-flex';
+        status.style.borderColor = '#B89AD8';
+        status.style.color = '#B89AD8';
+        statusText.textContent = 'Voting Open';
+      } else {
+        status.style.display = 'none';
+      }
+    }
+
+    function renderLeaderboard(leaderboard, currentDay) {
+      const grid = document.getElementById('leaderboard');
+      grid.innerHTML = '';
+      if (!leaderboard || leaderboard.length === 0) return;
+
+      leaderboard.forEach(function(tribe) {
+        const card = document.createElement('div');
+        card.className = 'tribe-card rank-' + tribe.rank + (tribe.status === 'dissolved' ? ' dissolved' : '');
+        card.style.setProperty('--tribe-color', tribe.color_hex);
+
+        // Rank watermark
+        const rankWatermark = document.createElement('div');
+        rankWatermark.className = 'tribe-card-rank';
+        rankWatermark.textContent = tribe.rank;
+        card.appendChild(rankWatermark);
+
+        // Leader marker
+        if (tribe.rank === 1 && tribe.points > 0) {
+          const leaderMark = document.createElement('div');
+          leaderMark.className = 'leader-mark';
+          leaderMark.textContent = '✦ Leading';
+          card.appendChild(leaderMark);
+        }
+
+        // Flag
+        const flag = document.createElement('div');
+        flag.className = 'tribe-card-flag';
+        const swatch = document.createElement('div');
+        swatch.className = 'swatch';
+        const name = document.createElement('div');
+        name.className = 'tribe-card-name';
+        name.textContent = tribe.name;
+        flag.appendChild(swatch);
+        flag.appendChild(name);
+        card.appendChild(flag);
+
+        // Points
+        const points = document.createElement('div');
+        points.className = 'tribe-card-points';
+        const targetVal = tribe.points;
+        const currentVal = DISPLAYED_POINTS[tribe.id] || 0;
+        points.textContent = currentVal;
+        animateCountUp(points, currentVal, targetVal, 800);
+        DISPLAYED_POINTS[tribe.id] = targetVal;
+        card.appendChild(points);
+
+        const pointsLabel = document.createElement('div');
+        pointsLabel.className = 'tribe-card-points-label';
+        pointsLabel.textContent = 'Points';
+        card.appendChild(pointsLabel);
+
+        // Meta: torches
+        const meta = document.createElement('div');
+        meta.className = 'tribe-card-meta';
+        const torches = document.createElement('div');
+        torches.className = 'torches';
+        torches.innerHTML =
+          '<span class="live-dot">●</span> ' + tribe.members_active + ' active' +
+          (tribe.members_jury > 0 ? '  ·  <span class="gone">○</span> ' + tribe.members_jury + ' on jury' : '');
+        meta.appendChild(torches);
+        card.appendChild(meta);
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderToday(today) {
+      const titleEl = document.getElementById('todayTitle');
+      const bodyEl = document.getElementById('todayBody');
+
+      if (!today) {
+        titleEl.innerHTML = '—';
+        bodyEl.innerHTML = '<div class="empty-state">No active challenge.</div>';
+        return;
+      }
+
+      titleEl.innerHTML = '<span class="panel-icon">' + today.icon + '</span>' + today.name;
+      bodyEl.innerHTML = '';
+
+      const statusPill = document.createElement('div');
+      statusPill.className = 'today-status ' + today.status;
+      statusPill.textContent = today.statusLabel;
+      bodyEl.appendChild(statusPill);
+
+      if (today.isFinale) {
+        const finaleNote = document.createElement('p');
+        finaleNote.style.marginTop = '1rem';
+        finaleNote.style.color = 'var(--ember)';
+        finaleNote.style.fontStyle = 'italic';
+        finaleNote.textContent = 'The finale. Double points awarded.';
+        bodyEl.appendChild(finaleNote);
+      }
+
+      const note = document.createElement('p');
+      note.style.marginTop = '1rem';
+      note.style.color = 'var(--ink-cream-soft)';
+      note.style.fontSize = '0.95rem';
+      if (today.status === 'pending') {
+        note.textContent = 'Tribes will pick competitors the night before.';
+      } else if (today.status === 'voting') {
+        note.textContent = 'Each tribe votes for the 2 members who will compete.';
+      } else if (today.status === 'in_progress') {
+        note.textContent = 'May the best tribe survive.';
+      } else {
+        note.textContent = 'Results recorded. See the leaderboard above.';
+      }
+      bodyEl.appendChild(note);
+    }
+
+    function renderYesterday(yesterday) {
+      const titleEl = document.getElementById('yesterdayTitle');
+      const bodyEl = document.getElementById('yesterdayBody');
+
+      if (!yesterday) {
+        titleEl.innerHTML = '—';
+        bodyEl.innerHTML = '<div class="empty-state">No previous council yet.</div>';
+        return;
+      }
+
+      titleEl.innerHTML = '<span class="panel-icon">' + yesterday.icon + '</span>' + yesterday.name;
+      bodyEl.innerHTML = '';
+
+      // Winner banner
+      if (yesterday.winner) {
+        const winnerEl = document.createElement('div');
+        winnerEl.className = 'yesterday-winner';
+        winnerEl.style.borderLeftColor = yesterday.winner.color_hex;
+        const lbl = document.createElement('span');
+        lbl.className = 'label';
+        lbl.textContent = '✦ Winner';
+        const nm = document.createElement('span');
+        nm.className = 'name';
+        nm.textContent = yesterday.winner.name;
+        winnerEl.appendChild(lbl);
+        winnerEl.appendChild(nm);
+        bodyEl.appendChild(winnerEl);
+      }
+
+      // Eliminations
+      const elimWrap = document.createElement('div');
+      elimWrap.className = 'torches-snuffed';
+      const heading = document.createElement('div');
+      heading.className = 'heading';
+      heading.textContent = 'Joined the Jury';
+      elimWrap.appendChild(heading);
+
+      if (yesterday.eliminated && yesterday.eliminated.length > 0) {
+        yesterday.eliminated.forEach(function(person) {
+          const row = document.createElement('div');
+          row.className = 'torch-row';
+          const torch = document.createElement('span');
+          torch.className = 'torch';
+          torch.textContent = '◯';
+          const name = document.createElement('span');
+          name.className = 'name';
+          name.textContent = person.name;
+          const tribe = document.createElement('span');
+          tribe.className = 'tribe';
+          tribe.style.color = person.tribe_color_hex;
+          tribe.textContent = person.tribe_name;
+          row.appendChild(torch);
+          row.appendChild(name);
+          row.appendChild(tribe);
+          elimWrap.appendChild(row);
+        });
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = 'No eliminations recorded.';
+        elimWrap.appendChild(empty);
+      }
+      bodyEl.appendChild(elimWrap);
+    }
+
+    // =========================================================================
+    // COUNT-UP ANIMATION for points
+    // =========================================================================
+    function animateCountUp(el, from, to, duration) {
+      if (from === to) { el.textContent = to; return; }
+      const start = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+        const val = Math.round(from + (to - from) * eased);
+        el.textContent = val;
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // =========================================================================
+    // EVENT DELEGATION
+    // =========================================================================
+    function handleClick(e) {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+      switch (action) {
+        case 'replay-ceremonies':
+          replayAllCeremonies();
+          break;
+      }
+    }
+
+    function callMvp(open, successMsg) {
+      google.script.run
+        .withSuccessHandler(function() { showToast(successMsg, 'success'); })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setMvpVotingOpen(open);
+    }
+
+    function lockCompetitors() {
+      const day = document.getElementById('electionWindowSelect').value;
+      if (!day) { showToast('Pick the election day first', 'error'); return; }
+      if (!confirm('Close election for ' + day.toUpperCase() + ' and lock the top 2 vote-getters per tribe as competitors?')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          showToast('Competitors locked · ' + (res.tribesPicked || []).length + ' tribes', 'success');
+          document.getElementById('electionWindowSelect').value = '';
+          pollState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .closeElectionAndLock(day);
+    }
+
+    function openCouncil() {
+      const day = document.getElementById('councilDaySelect').value;
+      const tribeId = document.getElementById('councilTribeSelect').value;
+      if (!day || !tribeId) { showToast('Pick day AND tribe', 'error'); return; }
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Council open · ' + day.toUpperCase(), 'success');
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setCouncilWindow(day, tribeId);
+    }
+
+    function closeCouncil() {
+      const day = document.getElementById('councilDaySelect').value;
+      const tribeId = document.getElementById('councilTribeSelect').value;
+      if (!day || !tribeId) { showToast('Pick day AND tribe', 'error'); return; }
+      if (!confirm('Close council for ' + day.toUpperCase() + ' and eliminate the top 2 vote-getters?')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          const names = (res.eliminated || []).map(function(m) { return m.name; }).join(', ');
+          showToast('To Jury: ' + names, 'success');
+          document.getElementById('councilDaySelect').value = '';
+          document.getElementById('councilTribeSelect').value = '';
+          pollState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .closeCouncilAndEliminate(day, tribeId);
+    }
+
+    // Sim day select change handler
+    document.addEventListener('change', function(e) {
+      if (e.target.id === 'simDaySelect') {
+        const day = e.target.value;
+        google.script.run
+          .withSuccessHandler(function() {
+            showToast('Sim day: ' + day, 'success');
+            pollState();
+          })
+          .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+          .setSimDay(day);
+      } else if (e.target.id === 'challengeStatusSelect') {
+        const day = LATEST_STATE && LATEST_STATE.currentDay;
+        if (!day || day === 'post') {
+          showToast('Set sim day first', 'error');
+          return;
+        }
+        google.script.run
+          .withSuccessHandler(function() {
+            showToast('Status: ' + e.target.value, 'success');
+            pollState();
+          })
+          .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+          .setChallengeStatus(day, e.target.value);
+      } else if (e.target.id === 'elimTribeSelect') {
+        loadElimMembers(e.target.value);
+      } else if (e.target.id === 'electionWindowSelect') {
+        const day = e.target.value;
+        google.script.run
+          .withSuccessHandler(function() {
+            showToast(day ? 'Election open for ' + day.toUpperCase() : 'Election closed', 'success');
+          })
+          .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+          .setElectionWindow(day);
+      }
+    });
+
+    // =========================================================================
+    // ADMIN SIM CONTROLS
+    // =========================================================================
+    function buildPlacementInputs() {
+      const wrap = document.getElementById('placementInputs');
+      wrap.innerHTML = '';
+      TRIBES_DATA.forEach(function(t) {
+        const row = document.createElement('div');
+        row.className = 'placement-row';
+        const lbl = document.createElement('div');
+        lbl.className = 'label';
+        const sw = document.createElement('span');
+        sw.className = 'swatch';
+        sw.style.background = t.color_hex;
+        const txt = document.createTextNode(' ' + t.name);
+        lbl.appendChild(sw);
+        lbl.appendChild(txt);
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.min = '1'; inp.max = '6';
+        inp.placeholder = '#';
+        inp.dataset.tribeId = t.id;
+        inp.className = 'placement-input';
+        row.appendChild(lbl);
+        row.appendChild(inp);
+        wrap.appendChild(row);
+      });
+    }
+
+    function buildElimTribeSelect() {
+      const sel = document.getElementById('elimTribeSelect');
+      const sel2 = document.getElementById('councilTribeSelect');
+      const sel3 = document.getElementById('dissolveTribeSelect');
+      TRIBES_DATA.forEach(function(t) {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+        if (sel2) {
+          const opt2 = document.createElement('option');
+          opt2.value = t.id;
+          opt2.textContent = t.name;
+          sel2.appendChild(opt2);
+        }
+        if (sel3) {
+          const opt3 = document.createElement('option');
+          opt3.value = t.id;
+          opt3.textContent = t.name;
+          sel3.appendChild(opt3);
+        }
+      });
+    }
+
+    function confirmDissolveTribe() {
+      const tribeId = document.getElementById('dissolveTribeSelect').value;
+      if (!tribeId) { showToast('Pick a tribe first', 'error'); return; }
+      const tribe = TRIBES_DATA.filter(function(t) { return t.id === tribeId; })[0];
+      if (!confirm('Dissolve ' + (tribe ? tribe.name : 'this tribe') + ' and redistribute all active members?\n\nThis is for tribes that have dropped to ≤2 active members. The merge ceremony will play on the Contest dashboard.')) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          const names = (res.reassignments || []).map(function(r) { return r.name + '→' + r.newTribe; }).join(', ');
+          showToast('Dissolved · ' + names, 'success');
+          document.getElementById('dissolveTribeSelect').value = '';
+          pollState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .dissolveTribeAndRedistribute(tribeId);
+    }
+
+    function loadElimMembers(tribeId) {
+      const wrap = document.getElementById('elimMembers');
+      wrap.innerHTML = '';
+      if (!tribeId) return;
+      google.script.run
+        .withSuccessHandler(function(members) {
+          members.forEach(function(m) {
+            const lbl = document.createElement('label');
+            lbl.style.display = 'block';
+            lbl.style.padding = '0.3rem 0';
+            lbl.style.color = 'var(--ink-cream)';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = m.id;
+            cb.className = 'elim-check';
+            cb.style.marginRight = '0.5rem';
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode(m.name));
+            wrap.appendChild(lbl);
+          });
+        })
+        .getActiveMembersByTribe(tribeId);
+    }
+
+    function savePlacements() {
+      const day = LATEST_STATE && LATEST_STATE.currentDay;
+      if (!day || day === 'post') { showToast('Set sim day first', 'error'); return; }
+      const inputs = document.querySelectorAll('.placement-input');
+      const placements = [];
+      inputs.forEach(function(inp) {
+        const v = parseInt(inp.value, 10);
+        if (v >= 1 && v <= 6) placements.push({ tribe_id: inp.dataset.tribeId, placement: v });
+      });
+      if (placements.length === 0) { showToast('Enter at least one placement', 'error'); return; }
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Placements saved · ' + day.toUpperCase(), 'success');
+          pollState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setChallengeResults(day, placements);
+    }
+
+    function saveEliminations() {
+      const day = LATEST_STATE && LATEST_STATE.currentDay;
+      if (!day || day === 'post') { showToast('Set sim day first', 'error'); return; }
+      const checks = document.querySelectorAll('.elim-check:checked');
+      const ids = [];
+      checks.forEach(function(c) { ids.push(c.value); });
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast(ids.length + ' eliminated · ' + day.toUpperCase(), 'success');
+          pollState();
+          // Re-load elim members to reflect status change
+          loadElimMembers(document.getElementById('elimTribeSelect').value);
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .setEliminations(day, ids);
+    }
+
+    function confirmReset() {
+      if (!confirm('Reset ALL contest progress?\n\nThis clears every challenge result and elimination, restores all members to active, and clears the sim day. Roster itself is preserved.')) return;
+      google.script.run
+        .withSuccessHandler(function() {
+          showToast('Reset complete', 'success');
+          DISPLAYED_POINTS = {};
+          document.getElementById('simDaySelect').value = 'auto';
+          pollState();
+        })
+        .withFailureHandler(function(err) { showToast(err.message || 'Failed', 'error'); })
+        .resetContestProgress();
+    }
+
+    // =========================================================================
+    // UTILITIES
+    // =========================================================================
+    // =========================================================================
+    // PHASE 7 — TICKER + CEREMONIES
+    // =========================================================================
+    function renderTicker(items) {
+      const track = document.getElementById('tickerTrack');
+      if (!track) return;
+      if (!items || items.length === 0) {
+        track.innerHTML = '<span class="ticker-empty">Confessionals appear here as castaways speak to the camera…</span>';
+        return;
+      }
+      // Build a single track string with all quotes; CSS animation handles loop
+      const html = items.map(function(c) {
+        const color = c.tribe_color_hex || '#E2723F';
+        return '<span class="ticker-quote">' +
+          '<span class="speaker" style="color:' + color + '">' +
+          escapeHtmlC(c.name) + '</span>' +
+          escapeHtmlC(c.text) + '</span>';
+      }).join('');
+      // Duplicate the content so the loop is seamless
+      track.innerHTML = html + html;
+    }
+
+    // =========================================================================
+    // CEREMONY SYSTEM (Phase 7.5)
+    // =========================================================================
+    // Ceremonies live on the server for 12 hours. We track which ones THIS
+    // browser has already seen via localStorage so we don't replay forever.
+    //
+    // Behavior:
+    //   - On first daily load, queue unseen ceremonies and auto-play them in
+    //     sequence (1s gap between each)
+    //   - Otherwise just react to new ceremonies as they arrive (live-fired)
+    //   - Manual "Watch Highlights" button replays ALL active ceremonies
+    //     regardless of seen status
+    //   - Recap panel always shows static summary of all active ceremonies
+    //
+    // localStorage keys:
+    //   rhsv_seen_ceremonies     — JSON array of ceremony IDs already played
+    //   rhsv_last_visit_date     — date string (YYYY-MM-DD) of last visit
+    // =========================================================================
+
+    let CURRENT_CEREMONY_ID = null;
+    let CEREMONY_QUEUE = [];      // pending ceremonies to play in sequence
+    let LATEST_CEREMONIES = [];   // last-fetched list for the recap panel
+    let HAS_DONE_DAILY_AUTOPLAY = false;
+
+    function getSeenCeremonies() {
+      try {
+        const raw = localStorage.getItem('rhsv_seen_ceremonies');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function markCeremonySeen(id) {
+      try {
+        const arr = getSeenCeremonies();
+        if (arr.indexOf(id) === -1) arr.push(id);
+        // Cap at 200 entries — old IDs prune naturally as ceremonies expire server-side
+        const trimmed = arr.slice(-200);
+        localStorage.setItem('rhsv_seen_ceremonies', JSON.stringify(trimmed));
+      } catch (e) { /* localStorage unavailable; just skip */ }
+    }
+    function isFirstVisitToday() {
+      try {
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const last = localStorage.getItem('rhsv_last_visit_date');
+        if (last !== today) {
+          localStorage.setItem('rhsv_last_visit_date', today);
+          return true;
+        }
+        return false;
+      } catch (e) { return false; }
+    }
+
+    function handleCeremonies(events) {
+      LATEST_CEREMONIES = events || [];
+      renderRecap(LATEST_CEREMONIES);
+
+      if (!events || events.length === 0) return;
+
+      // First-daily-visit auto-play: queue all unseen ceremonies on first load
+      if (!HAS_DONE_DAILY_AUTOPLAY) {
+        HAS_DONE_DAILY_AUTOPLAY = true;
+        if (isFirstVisitToday()) {
+          const seen = getSeenCeremonies();
+          const unseen = events.filter(function(e) { return seen.indexOf(e.id) === -1; });
+          if (unseen.length > 0) {
+            // Sort by timestamp ascending so they replay in the order they happened
+            unseen.sort(function(a, b) { return new Date(a.ts) - new Date(b.ts); });
+            queueCeremonies(unseen);
+            return; // skip the live-fire path below
+          }
+        }
+      }
+
+      // Live-fire path: only play brand-new ceremonies (within last 30 seconds)
+      // that we haven't seen yet. This avoids replaying older ones that arrived
+      // simply because of polling.
+      const seen = getSeenCeremonies();
+      const cutoff = Date.now() - 30000;
+      const fresh = events.filter(function(e) {
+        if (seen.indexOf(e.id) !== -1) return false;
+        const ts = new Date(e.ts).getTime();
+        return ts >= cutoff;
+      });
+      if (fresh.length > 0 && !CURRENT_CEREMONY_ID && CEREMONY_QUEUE.length === 0) {
+        queueCeremonies(fresh);
+      }
+    }
+
+    function queueCeremonies(events) {
+      CEREMONY_QUEUE = CEREMONY_QUEUE.concat(events);
+      pumpCeremonyQueue();
+    }
+
+    function pumpCeremonyQueue() {
+      if (CURRENT_CEREMONY_ID) return; // a ceremony is already playing
+      const next = CEREMONY_QUEUE.shift();
+      if (!next) return;
+      playCeremony(next);
+    }
+
+    function playCeremony(event) {
+      markCeremonySeen(event.id);
+      CURRENT_CEREMONY_ID = event.id;
+      const overlay = document.getElementById('ceremonyOverlay');
+      if (!overlay) return;
+      overlay.innerHTML = '';
+
+      const card = document.createElement('div');
+      card.className = 'ceremony-overlay ' + event.type;
+
+      const p = event.payload || {};
+
+      if (event.type === 'idol_claimed') {
+        const idolName = (p.idol_name || 'The Hidden Idol').toString();
+        card.innerHTML =
+          '<div class="ceremony-icon">⚡</div>' +
+          '<div class="ceremony-eyebrow">Hidden Immunity Idol</div>' +
+          '<h1 class="ceremony-headline">' + escapeHtmlC(idolName) + '<br>Has Been Claimed</h1>' +
+          '<div class="ceremony-detail">' +
+          '<span style="color:' + (p.tribe_color_hex || '#E2723F') + '">' +
+          escapeHtmlC(p.member_name || 'A castaway') + '</span> · ' +
+          escapeHtmlC(p.tribe_name || '') + '</div>' +
+          '<div class="ceremony-dismiss-hint">Click anywhere to dismiss</div>';
+      } else if (event.type === 'council_reveal') {
+        const namesHtml = (p.eliminated || []).map(function(e) {
+          return '<div class="ceremony-name" style="color:' +
+            (e.tribe_color_hex || '#E58D88') + '">' +
+            escapeHtmlC(e.name) + '</div>';
+        }).join('');
+        card.innerHTML =
+          '<div class="ceremony-eyebrow">Tribal Council · ' +
+          escapeHtmlC((p.tribe_name || '').toUpperCase()) + '</div>' +
+          '<h1 class="ceremony-headline">Joined the Jury</h1>' +
+          '<div class="ceremony-names">' + namesHtml + '</div>' +
+          '<div class="ceremony-dismiss-hint">Click anywhere to dismiss</div>';
+      } else if (event.type === 'tribe_merge') {
+        const dissolving = p.dissolving || { name: 'A Tribe', color_hex: '#888' };
+        const receiving = p.receiving || [];
+        const receivingHtml = receiving.map(function(t) {
+          return '<span class="ceremony-merge-tribe-pill" style="border-color:' + t.color_hex +
+            '; color:' + t.color_hex + '">' + escapeHtmlC(t.name) + '</span>';
+        }).join('<span class="ceremony-merge-arrow">+</span>');
+        card.innerHTML =
+          '<div class="ceremony-eyebrow">The Tribes Merge</div>' +
+          '<h1 class="ceremony-headline">' + escapeHtmlC(dissolving.name) + '<br>Has Dissolved</h1>' +
+          '<div class="ceremony-merge-tribes">' +
+          '<span class="ceremony-merge-tribe-pill" style="border-color:' + dissolving.color_hex +
+          '; color:' + dissolving.color_hex + '; opacity: 0.5; text-decoration: line-through;">' +
+          escapeHtmlC(dissolving.name) + '</span>' +
+          '<span class="ceremony-merge-arrow">→</span>' +
+          receivingHtml + '</div>' +
+          '<div class="ceremony-detail">Members redistributed across remaining tribes.</div>' +
+          '<div class="ceremony-dismiss-hint">Click anywhere to dismiss</div>';
+      } else {
+        // Unknown type — skip
+        CURRENT_CEREMONY_ID = null;
+        return;
+      }
+
+      overlay.appendChild(card);
+
+      // Auto-dismiss after 8 seconds; click also dismisses.
+      // After dismissal, pump the queue so the next ceremony plays (with a 1s gap).
+      const dismiss = function() {
+        card.classList.add('fading-out');
+        setTimeout(function() {
+          overlay.innerHTML = '';
+          CURRENT_CEREMONY_ID = null;
+          // 1-second gap then play the next queued ceremony, if any
+          setTimeout(pumpCeremonyQueue, 1000);
+        }, 800);
+      };
+      const autoDismissTimer = setTimeout(dismiss, 8000);
+      card.addEventListener('click', function() {
+        clearTimeout(autoDismissTimer);
+        dismiss();
+      });
+    }
+
+    function renderRecap(events) {
+      const panel = document.getElementById('recapPanel');
+      const list = document.getElementById('recapList');
+      if (!panel || !list) return;
+
+      if (!events || events.length === 0) {
+        panel.style.display = 'none';
+        return;
+      }
+      panel.style.display = 'block';
+      list.innerHTML = '';
+
+      // Show newest-first
+      const sorted = events.slice().sort(function(a, b) { return new Date(b.ts) - new Date(a.ts); });
+
+      sorted.forEach(function(e) {
+        const item = document.createElement('div');
+        item.className = 'recap-item ' + e.type;
+
+        const p = e.payload || {};
+        let icon = '✦', eyebrow = '', headline = '', detail = '';
+
+        if (e.type === 'idol_claimed') {
+          icon = '⚡';
+          eyebrow = 'Hidden Immunity Idol';
+          headline = (p.idol_name || 'The Idol') + ' Has Been Claimed';
+          detail = (p.member_name || 'A castaway') + ' · ' + (p.tribe_name || '');
+        } else if (e.type === 'council_reveal') {
+          icon = '🔥';
+          eyebrow = 'Tribal Council · ' + (p.tribe_name || '').toUpperCase();
+          headline = 'Joined the Jury';
+          const names = (p.eliminated || []).map(function(x) { return x.name; }).join(' · ');
+          detail = names;
+        } else if (e.type === 'tribe_merge') {
+          icon = '🤝';
+          eyebrow = 'The Tribes Merge';
+          const dissolved = p.dissolving ? p.dissolving.name : 'A tribe';
+          headline = dissolved + ' Has Dissolved';
+          const into = (p.receiving || []).map(function(t) { return t.name; }).join(' & ');
+          detail = 'Members redistributed to ' + (into || 'remaining tribes');
+        }
+
+        const time = e.ts ? formatRecapTime(e.ts) : '';
+
+        item.innerHTML =
+          '<div class="recap-item-icon">' + icon + '</div>' +
+          '<div class="recap-item-body">' +
+          '<div class="recap-item-eyebrow">' + escapeHtmlC(eyebrow) + '</div>' +
+          '<div class="recap-item-headline">' + escapeHtmlC(headline) + '</div>' +
+          '<div class="recap-item-detail">' + escapeHtmlC(detail) + '</div>' +
+          (time ? '<div class="recap-item-time">' + escapeHtmlC(time) + '</div>' : '') +
+          '</div>';
+        list.appendChild(item);
+      });
+    }
+
+    function formatRecapTime(iso) {
+      try {
+        const d = new Date(iso);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return 'Just now';
+        if (diffMin < 60) return diffMin + ' min ago';
+        const diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 12) {
+          const ampm = d.getHours() >= 12 ? 'pm' : 'am';
+          let h = d.getHours() % 12; if (h === 0) h = 12;
+          const m = d.getMinutes() < 10 ? '0' + d.getMinutes() : d.getMinutes();
+          return h + ':' + m + ampm;
+        }
+        return d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' +
+               d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      } catch (e) { return ''; }
+    }
+
+    function replayAllCeremonies() {
+      if (!LATEST_CEREMONIES || LATEST_CEREMONIES.length === 0) {
+        showToast('Nothing to replay', 'error');
+        return;
+      }
+      // Force-replay regardless of seen status. Sort oldest-first so they play in
+      // chronological order.
+      const sorted = LATEST_CEREMONIES.slice().sort(function(a, b) { return new Date(a.ts) - new Date(b.ts); });
+      // Don't re-seed the queue if one is already playing
+      if (CURRENT_CEREMONY_ID) {
+        showToast('Already playing — wait for current to finish', 'error');
+        return;
+      }
+      CEREMONY_QUEUE = sorted.slice();
+      pumpCeremonyQueue();
+    }
+
+    function escapeHtmlC(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function showToast(msg, kind) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (kind ? (' ' + kind) : '');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(function() { t.className = 'toast'; }, 2400);
+    }
+
+    function showFatal(err) {
+      document.getElementById('heroHeadline').textContent = 'Connection Failed';
+      document.getElementById('heroSubline').textContent = (err && err.message) ? err.message : String(err);
+    }
+  </script>
+</body>
+</html>
