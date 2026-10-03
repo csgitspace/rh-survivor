@@ -1,0 +1,47 @@
+<!--
+  Roy-Hart Survivor Week — Top Bar with Navigation
+  Included by every dashboard. Shows brand mark, role-aware nav, and current user pill.
+  Expects: userEmail, userRole, scriptUrl, pageView (one of: contest|tribe|jury|admin|other)
+-->
+<header class="top-bar">
+  <div class="top-bar-left">
+    <div class="brand">
+      <div class="brand-mark"><span>RH</span></div>
+      <div>
+        Roy-Hart Survivor
+        <span class="brand-divider">·</span>
+        <span class="brand-dates">May 4–8 · 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="top-nav">
+    <a href="<?= scriptUrl ?>?view=contest" class="nav-link <?= pageView === 'contest' ? 'active' : '' ?>">Contest</a>
+    <? if (userRole === 'active' || userRole === 'jury' || userRole === 'admin') { ?>
+      <a href="<?= scriptUrl ?>?view=tribe" class="nav-link <?= pageView === 'tribe' ? 'active' : '' ?>">My Tribe</a>
+    <? } ?>
+    <? if (userRole === 'jury' || userRole === 'admin') { ?>
+      <a href="<?= scriptUrl ?>?view=jury" class="nav-link <?= pageView === 'jury' ? 'active' : '' ?>">Jury</a>
+    <? } ?>
+    <? if (userRole === 'admin') { ?>
+      <a href="<?= scriptUrl ?>" class="nav-link <?= pageView === 'admin' ? 'active' : '' ?>">Admin</a>
+    <? } ?>
+  </nav>
+
+  <div class="user">
+    <? if (userEmail) { ?>
+      <span class="user-email"><?= userEmail ?></span>
+      <? if (userRole === 'admin') { ?>
+        <span class="role-pill" style="border-color: var(--rh-purple); color: var(--rh-purple);">Admin</span>
+      <? } else if (userRole === 'jury') { ?>
+        <span class="role-pill">Jury</span>
+      <? } else if (userRole === 'active') { ?>
+        <span class="role-pill" style="border-color: var(--jade); color: var(--jade);">Castaway</span>
+      <? } else { ?>
+        <span class="role-pill" style="border-color: var(--ink-faded); color: var(--ink-faded);">Guest</span>
+      <? } ?>
+    <? } else { ?>
+      <span style="color: var(--ink-faded); font-style: italic;">Not signed in</span>
+    <? } ?>
+  </div>
+</header>
