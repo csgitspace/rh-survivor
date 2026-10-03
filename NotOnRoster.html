@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Styles') ?>
+</head>
+<body>
+  <?!= include('Header', {
+    userEmail: (typeof userEmail !== 'undefined') ? userEmail : '',
+    userRole: (typeof userRole !== 'undefined') ? userRole : 'unknown',
+    scriptUrl: (typeof scriptUrl !== 'undefined') ? scriptUrl : '',
+    pageView: (typeof pageView !== 'undefined') ? pageView : 'other'
+  }) ?>
+
+  <main class="shell">
+    <section class="scaffold-hero stagger" style="padding-top: 4rem;">
+      <div class="eyebrow">Castaway Not Found</div>
+      <h1 class="display-xl">Off the Map</h1>
+      <div class="ornament">✦ ✦ ✦</div>
+
+      <? var safeEmail = (typeof userEmail !== 'undefined') ? userEmail : ''; ?>
+      <? if (safeEmail) { ?>
+        <p style="max-width: 56ch; margin: 0 auto 1.5rem; color: var(--ink-cream-soft); font-size: 1.05rem;">
+          You're signed in as <strong style="color: var(--parchment);"><?= safeEmail ?></strong>,
+          but we couldn't find you on the contest roster.
+        </p>
+        <p style="max-width: 56ch; margin: 0 auto 2rem; color: var(--ink-cream-soft); font-size: 0.95rem;">
+          If you believe this is a mistake, contact one of the contest admins.
+        </p>
+      <? } else { ?>
+        <p style="max-width: 56ch; margin: 0 auto 2rem; color: var(--ink-cream-soft); font-size: 1.05rem;">
+          We couldn't read your email. Please make sure you're signed into Chrome with your
+          <strong style="color: var(--parchment);">@royhart.org</strong> account, then refresh this page.
+        </p>
+      <? } ?>
+
+      <div class="row" style="justify-content: center;">
+        <a href="<?= (typeof scriptUrl !== 'undefined') ? scriptUrl : '' ?>?view=contest" class="btn">View Public Leaderboard</a>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div class="ornament">✦ ✦ ✦</div>
+      Roy-Hart Middle School · Survivor Week
+    </footer>
+  </main>
+</body>
+</html>
